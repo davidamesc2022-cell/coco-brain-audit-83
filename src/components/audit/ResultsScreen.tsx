@@ -6,7 +6,7 @@ import { Mail, MessageSquare, Copy, Check, Share2, RotateCcw } from 'lucide-reac
 import { toast } from 'sonner';
 
 // TODO: Reemplaza este número por tu número de WhatsApp real (código de país + número, ej: 51987654321)
-const WHATSAPP_NUMBER = '51936623194'; 
+const WHATSAPP_NUMBER = '51913321222'; 
 
 interface ResultsScreenProps {
   areaScores: { areaId: number; score: number }[];
