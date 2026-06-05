@@ -215,6 +215,7 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[60px] text-center">Acción</TableHead>
                       <TableHead className="min-w-[120px]">Fecha</TableHead>
                       <TableHead>Nombre</TableHead>
                       <TableHead>Empresa</TableHead>
@@ -226,12 +227,22 @@ export default function Admin() {
                       <TableHead>Email</TableHead>
                       <TableHead>Teléfono</TableHead>
                       <TableHead className="text-right">Puntaje</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {leads.map((lead) => (
                       <TableRow key={lead.id}>
+                        <TableCell className="text-center">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDeleteLead(lead.id, lead.full_name)}
+                            className="text-muted-foreground hover:text-destructive transition-colors h-7 w-7"
+                            title="Eliminar lead"
+                          >
+                            <Trash2 size={13} />
+                          </Button>
+                        </TableCell>
                         <TableCell className="text-xs">{format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
                         <TableCell className="font-medium text-xs md:text-sm">{lead.full_name}</TableCell>
                         <TableCell className="font-semibold text-xs md:text-sm">{lead.company_name}</TableCell>
@@ -244,17 +255,6 @@ export default function Admin() {
                         <TableCell className="text-xs">{lead.phone}</TableCell>
                         <TableCell className="text-right font-bold text-xs md:text-sm">
                           {lead.audits?.[0]?.total_score ? `${lead.audits[0].total_score}/100` : '-'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDeleteLead(lead.id, lead.full_name)}
-                            className="text-muted-foreground hover:text-destructive transition-colors h-8 w-8"
-                            title="Eliminar lead"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
