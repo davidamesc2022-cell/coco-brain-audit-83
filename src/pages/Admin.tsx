@@ -221,13 +221,22 @@ export default function Admin() {
               Gestiona los prospectos generados por la auditoría y sus perfiles de negocio.
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {leads.length > 0 && (
+              <Button 
+                onClick={() => handleSelectAll(selectedLeadIds.length !== leads.length)} 
+                variant="outline" 
+                className="gap-2 shrink-0 text-xs"
+              >
+                {selectedLeadIds.length === leads.length ? "Deseleccionar todos" : "Seleccionar todos"}
+              </Button>
+            )}
             {selectedLeadIds.length > 0 && (
-              <Button onClick={handleDeleteSelected} variant="destructive" className="gap-2 shrink-0">
+              <Button onClick={handleDeleteSelected} variant="destructive" className="gap-2 shrink-0 text-xs">
                 <Trash2 size={16} /> Eliminar seleccionados ({selectedLeadIds.length})
               </Button>
             )}
-            <Button onClick={exportToCSV} variant="outline" className="gap-2 shrink-0">
+            <Button onClick={exportToCSV} variant="outline" className="gap-2 shrink-0 text-xs">
               <Download size={16} /> Exportar CSV
             </Button>
           </div>
@@ -263,13 +272,7 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[50px] text-center">
-                        <Checkbox 
-                          checked={leads.length > 0 && selectedLeadIds.length === leads.length}
-                          onCheckedChange={(checked) => handleSelectAll(!!checked)}
-                          aria-label="Seleccionar todos"
-                        />
-                      </TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                       <TableHead className="min-w-[120px]">Fecha</TableHead>
                       <TableHead>Nombre</TableHead>
                       <TableHead>Empresa</TableHead>
