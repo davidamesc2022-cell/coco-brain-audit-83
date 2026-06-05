@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Download, Users } from 'lucide-react';
+import { Loader2, Download, Users, Lock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
-import { Lock } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Lead {
   id: string;
@@ -75,6 +75,27 @@ export default function Admin() {
       console.error('Error fetching leads:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteLead = async (id: string, name: string) => {
+    if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente el lead de "${name}" y todo su historial de auditoría?`)) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('delete_lead_secure', {
+        lead_id: id,
+        admin_password: 'coco2026',
+      });
+
+      if (error) throw error;
+
+      toast.success(`Lead de "${name}" eliminado correctamente`);
+      setLeads(prevLeads => prevLeads.filter(l => l.id !== id));
+    } catch (error: any) {
+      console.error('Error deleting lead:', error);
+      toast.error('No se pudo eliminar el lead. Asegúrate de ejecutar el script SQL de inicialización en Supabase.');
     }
   };
 
@@ -205,6 +226,7 @@ export default function Admin() {
                       <TableHead>Email</TableHead>
                       <TableHead>Teléfono</TableHead>
                       <TableHead className="text-right">Puntaje</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -222,6 +244,17 @@ export default function Admin() {
                         <TableCell className="text-xs">{lead.phone}</TableCell>
                         <TableCell className="text-right font-bold text-xs md:text-sm">
                           {lead.audits?.[0]?.total_score ? `${lead.audits[0].total_score}/100` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDeleteLead(lead.id, lead.full_name)}
+                            className="text-muted-foreground hover:text-destructive transition-colors h-8 w-8"
+                            title="Eliminar lead"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
