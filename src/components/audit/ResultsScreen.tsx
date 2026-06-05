@@ -1,36 +1,64 @@
-import { useEffect, useRef, useState } from 'react';
-import { areas, getLevelInfo, getRecommendationsForArea } from '@/data/auditData';
+import { useEffect, useState } from 'react';
+import { areas, getLevelInfo } from '@/data/auditData';
 import { ScoreRing } from './ScoreRing';
+import { OnboardingData } from '@/hooks/useAudit';
+import { Mail, MessageSquare, Copy, Check, Share2, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
+
+// TODO: Reemplaza este número por tu número de WhatsApp real (código de país + número, ej: 51987654321)
+const WHATSAPP_NUMBER = '51936623194'; 
 
 interface ResultsScreenProps {
   areaScores: { areaId: number; score: number }[];
   totalScore: number;
   onShare: () => void;
   onReset: () => void;
+  onboardingData: OnboardingData | null;
 }
 
-export function ResultsScreen({ areaScores, totalScore, onShare, onReset }: ResultsScreenProps) {
+export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboardingData }: ResultsScreenProps) {
   const level = getLevelInfo(totalScore);
   const [animated, setAnimated] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setAnimated(true), 100);
     return () => clearTimeout(t);
   }, []);
 
-  // Get 3 weakest areas
-  const sortedAreas = [...areaScores].sort((a, b) => a.score - b.score);
-  const weakest3 = sortedAreas.slice(0, 3);
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('hablemos@davidamesc.com');
+    setCopied(true);
+    toast.success('Correo hablemos@davidamesc.com copiado al portapapeles');
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-  const monthLabels = [
-    { label: 'Mes 1', subtitle: 'Lanzamiento y corrección', color: '#2563EB' },
-    { label: 'Mes 2', subtitle: 'Escalación y optimización', color: '#7C3AED' },
-    { label: 'Mes 3', subtitle: 'Consolidación y automatización', color: '#059669' },
-  ];
+  // Texto de acuerdo al nivel para el agradecimiento
+  let levelDescription = '';
+  if (totalScore <= 40) {
+    levelDescription = 'un nivel Crítico. Esto indica que existen debilidades importantes en tus procesos de marketing que requieren atención inmediata para evitar perder clientes y presupuesto.';
+  } else if (totalScore <= 60) {
+    levelDescription = 'un nivel En Desarrollo. Tu negocio tiene bases sólidas, pero hay puntos ciegos clave que están frenando el crecimiento de tu facturación.';
+  } else if (totalScore <= 80) {
+    levelDescription = 'un nivel Intermedio. Cuentas con un marketing estructurado, pero hay oportunidades importantes para optimizar y escalar tus conversiones.';
+  } else {
+    levelDescription = 'un nivel Avanzado. ¡Felicidades! Tienes procesos de marketing muy saludables y listos para seguir innovando.';
+  }
+
+  const companyName = onboardingData?.companyName || 'tu negocio';
+  
+  // URL de WhatsApp pre-configurada
+  const whatsappMessage = `Hola David, acabo de completar mi auditoría para ${companyName} y obtuve un puntaje de ${totalScore}/100 (${level.label}). Quiero solicitar mi Plan de Acción de 90 días en PDF para implementarlo.`;
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+
+  // Mailto pre-configurado
+  const mailtoSubject = `Quiero mi Plan de Acción de 90 días - ${companyName}`;
+  const mailtoBody = `Hola David,\n\nobtuve un puntaje de ${totalScore}/100 en la auditoría de ${companyName} (${level.label}) y me interesa recibir el plan de acción de 90 días en PDF para analizarlo.\n\nSaludos.`;
+  const mailtoUrl = `mailto:hablemos@davidamesc.com?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center animate-fade-slide-up">
-      <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center gap-8">
+      <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center gap-6">
         <h1 className="text-2xl font-bold text-foreground">Tu diagnóstico de marketing</h1>
 
         {/* Score Ring */}
@@ -72,57 +100,81 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset }: Resu
           </div>
         </div>
 
-        {/* 90-Day Plan */}
-        <div className="w-full">
-          <h3 className="font-semibold text-foreground mb-4 text-lg">Plan de Acción 90 Días</h3>
-          <div className="flex flex-col gap-3">
-            {weakest3.map((weak, i) => {
-              const area = areas.find(a => a.id === weak.areaId)!;
-              const recs = getRecommendationsForArea(area.id, weak.score);
-              const month = monthLabels[i];
-              return (
-                <div key={area.id} className="audit-card p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: month.color + '15', color: month.color }}>
-                      {month.label}
-                    </span>
-                    <span className="text-sm text-muted-foreground">{month.subtitle}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2">{area.icon} {area.name} (Score: {weak.score})</p>
-                  <div className="flex flex-col gap-1.5">
-                    {recs.slice(0, 3).map((rec, j) => (
-                      <div key={j} className="flex items-start gap-2 text-sm">
-                        <span className="text-muted-foreground shrink-0">•</span>
-                        <span className="text-foreground">{rec}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+        {/* Tarjeta de Agradecimiento y CTA Persuasivo (Reemplaza la visualización directa del plan) */}
+        <div className="w-full bg-gradient-to-br from-primary/10 to-primary/5 rounded-3xl border border-primary/20 p-6 text-center shadow-lg space-y-4">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
+            🎉
+          </div>
+          <h3 className="text-lg font-bold text-foreground">¡Felicidades por completar tu auditoría!</h3>
+          
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Hemos registrado tus respuestas con éxito. El diagnóstico indica que <strong>{companyName}</strong> tiene {levelDescription}
+          </p>
+          
+          <div className="bg-card border border-border p-4 rounded-2xl text-left space-y-2">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider">¿Qué sigue ahora?</p>
+            <p className="text-sm text-foreground">
+              Tu <strong>Plan de Acción de 90 Días</strong> personalizado ya está generado en nuestros sistemas listo para ser implementado con tu equipo.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Para recibir el documento completo en PDF de manera gratuita, haz clic en uno de los canales de abajo:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 pt-2">
+            {/* Solicitar por WhatsApp */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-4 px-4 rounded-xl bg-[#25D366] text-white font-semibold text-sm hover:bg-[#20ba5a] transition-colors shadow-sm active:scale-[0.98]"
+            >
+              <MessageSquare size={18} />
+              Solicitar Plan por WhatsApp
+            </a>
+
+            {/* Solicitar por Correo */}
+            <a
+              href={mailtoUrl}
+              className="flex items-center justify-center gap-2 py-4 px-4 rounded-xl bg-orange-600 text-white font-semibold text-sm hover:bg-orange-700 transition-colors shadow-sm active:scale-[0.98]"
+            >
+              <Mail size={18} />
+              Solicitar Plan por Email
+            </a>
+          </div>
+
+          {/* Fallback de copia de correo por si falla el mailto */}
+          <div className="pt-2 border-t border-border flex flex-col items-center gap-1.5">
+            <p className="text-[10px] text-muted-foreground">
+              Si no cuentas con un cliente de correo configurado, copia nuestra dirección:
+            </p>
+            <div className="flex items-center gap-1 bg-muted px-3 py-1.5 rounded-lg border border-border max-w-full">
+              <span className="text-xs font-mono text-foreground truncate max-w-[200px]">hablemos@davidamesc.com</span>
+              <button 
+                onClick={handleCopyEmail}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                title="Copiar correo"
+              >
+                {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Immediate Action */}
-        {weakest3[0] && (
-          <div className="w-full audit-card p-4" style={{ borderColor: getLevelInfo(weakest3[0].score).colorHex + '40' }}>
-            <h3 className="font-semibold text-foreground mb-3">⚡ Acción inmediata esta semana</h3>
-            {getRecommendationsForArea(weakest3[0].areaId, weakest3[0].score).slice(0, 2).map((rec, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm mb-2">
-                <span>⚡</span>
-                <span className="text-foreground">{rec}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* CTAs */}
+        {/* Acciones Secundarias */}
         <div className="w-full flex flex-col gap-3 pb-8">
-          <button onClick={onShare} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all active:scale-[0.98]">
-            Compartir por WhatsApp
+          <button 
+            onClick={onShare} 
+            className="w-full py-4 rounded-2xl border border-border bg-card text-foreground font-semibold hover:bg-muted transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <Share2 size={16} /> Compartir Diagnóstico con otros
           </button>
-          <button onClick={onReset} className="w-full py-3 rounded-2xl border-[1.5px] border-border text-muted-foreground font-medium hover:bg-muted transition-colors">
-            Nueva Auditoría
+          
+          <button 
+            onClick={onReset} 
+            className="w-full py-3 rounded-2xl text-muted-foreground font-medium hover:bg-muted transition-colors flex items-center justify-center gap-2"
+          >
+            <RotateCcw size={14} /> Nueva Auditoría
           </button>
         </div>
       </div>

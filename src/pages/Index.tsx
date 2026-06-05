@@ -1,8 +1,10 @@
 import { useAudit } from '@/hooks/useAudit';
 import { LandingPage } from '@/components/audit/LandingPage';
+import { OnboardingScreen } from '@/components/audit/OnboardingScreen';
 import { ChapterIntro } from '@/components/audit/ChapterIntro';
 import { QuestionScreen } from '@/components/audit/QuestionScreen';
 import { ResultsScreen } from '@/components/audit/ResultsScreen';
+import { LeadCaptureScreen } from '@/components/audit/LeadCaptureScreen';
 import { getLevelInfo } from '@/data/auditData';
 
 const Index = () => {
@@ -20,6 +22,13 @@ const Index = () => {
   switch (audit.screen) {
     case 'landing':
       return <LandingPage onStart={audit.startAudit} />;
+    case 'onboarding':
+      return (
+        <OnboardingScreen
+          onSubmit={audit.submitOnboarding}
+          onBack={audit.goBack}
+        />
+      );
     case 'intro':
       return (
         <ChapterIntro
@@ -45,6 +54,18 @@ const Index = () => {
           onBack={audit.goBack}
         />
       );
+    case 'lead_capture':
+      return (
+        <LeadCaptureScreen
+          onSuccess={() => audit.goToResults()}
+          auditData={{
+            totalScore: audit.totalScore,
+            areaScores: audit.areaScores.reduce((acc, a) => ({ ...acc, [a.areaId]: a.score }), {}),
+            answers: audit.answers,
+          }}
+          onboardingData={audit.onboardingData}
+        />
+      );
     case 'results':
       return (
         <ResultsScreen
@@ -52,6 +73,7 @@ const Index = () => {
           totalScore={audit.totalScore}
           onShare={handleShare}
           onReset={audit.resetAudit}
+          onboardingData={audit.onboardingData}
         />
       );
   }

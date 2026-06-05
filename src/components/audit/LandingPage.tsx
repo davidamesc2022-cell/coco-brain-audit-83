@@ -75,9 +75,14 @@ export function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         {/* Footer */}
-        <p className="text-xs text-muted-foreground text-center leading-relaxed">
-          Las 6 áreas evaluadas: Análisis Situacional · Objetivos · Estrategia · Tácticas · Medición · Post-Venta
-        </p>
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            Las 6 áreas evaluadas: Análisis Situacional · Objetivos · Estrategia · Tácticas · Medición · Post-Venta
+          </p>
+          <a href="/admin" className="text-muted-foreground/30 hover:text-muted-foreground transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </a>
+        </div>
       </div>
     </div>
   );

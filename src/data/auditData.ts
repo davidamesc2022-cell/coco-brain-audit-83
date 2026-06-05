@@ -149,9 +149,101 @@ export function getLevelInfo(score: number): { label: string; colorClass: string
   return { label: 'Avanzado', colorClass: 'text-level-advanced', colorHex: '#059669' };
 }
 
-export function getRecommendationsForArea(areaId: number, score: number): string[] {
+export function getRecommendationsForArea(
+  areaId: number, 
+  score: number, 
+  businessType?: string, 
+  operatingTime?: string,
+  description?: string
+): string[] {
   const recs = recommendations[areaId];
-  if (score < 40) return recs.critical;
-  if (score < 70) return recs.medium;
-  return recs.advanced;
+  let baseRecs = recs.advanced;
+  if (score < 40) baseRecs = recs.critical;
+  else if (score < 70) baseRecs = recs.medium;
+
+  return baseRecs.map(rec => {
+    let customRec = rec;
+
+    // Adaptar según sector
+    if (businessType === 'productos') {
+      customRec = customRec
+        .replace(/cliente ideal/g, 'comprador ideal de tus productos')
+        .replace(/canal de ventas/g, 'tienda online o catálogo físico')
+        .replace(/prospectos a clientes/g, 'visitas a compras en tu tienda')
+        .replace(/tus procesos principales/g, 'tu gestión de catálogo y envíos');
+    } else if (businessType === 'servicios') {
+      customRec = customRec
+        .replace(/cliente ideal/g, 'cliente ideal de tus servicios')
+        .replace(/canal de ventas/g, 'embudo de asesorías o llamadas de venta')
+        .replace(/prospectos a clientes/g, 'agendamientos a clientes pagados')
+        .replace(/tus procesos principales/g, 'tu entrega de servicio y onboarding');
+    } else if (businessType === 'local') {
+      customRec = customRec
+        .replace(/cliente ideal/g, 'vecino/cliente ideal en tu zona')
+        .replace(/canal de ventas/g, 'ficha de Google Maps y WhatsApp local')
+        .replace(/prospectos a clientes/g, 'contactos a visitas físicas en local')
+        .replace(/tus procesos principales/g, 'tu atención en tienda y visual merchandising');
+    } else if (businessType === 'digital') {
+      customRec = customRec
+        .replace(/cliente ideal/g, 'buyer persona digital')
+        .replace(/canal de ventas/g, 'embudo automatizado o landing page')
+        .replace(/prospectos a clientes/g, 'registros a conversiones online')
+        .replace(/tus procesos principales/g, 'tus automatizaciones e integraciones de software');
+    }
+
+    // Adaptar según palabras clave de la descripción libre
+    if (description) {
+      const descLower = description.toLowerCase();
+      if (descLower.includes('zapatilla') || descLower.includes('calzado') || descLower.includes('zapato') || descLower.includes('gloria store')) {
+        customRec = customRec
+          .replace(/cliente ideal/g, 'comprador de calzado')
+          .replace(/comprador ideal de tus productos/g, 'comprador de calzado')
+          .replace(/el cliente/g, 'el comprador de calzado')
+          .replace(/los clientes/g, 'los compradores de calzado')
+          .replace(/un cliente/g, 'un comprador de calzado')
+          .replace(/tus productos/g, 'tus zapatillas y calzado')
+          .replace(/productos/g, 'zapatillas y calzado');
+      } else if (descLower.includes('ropa') || descLower.includes('prenda') || descLower.includes('vestir') || descLower.includes('moda') || descLower.includes('boutique') || descLower.includes('tienda de ropa')) {
+        customRec = customRec
+          .replace(/cliente ideal/g, 'comprador de moda')
+          .replace(/comprador ideal de tus productos/g, 'comprador de moda')
+          .replace(/el cliente/g, 'el cliente de moda')
+          .replace(/tus productos/g, 'tus colecciones de ropa')
+          .replace(/productos/g, 'prendas de vestir');
+      } else if (descLower.includes('auto') || descLower.includes('carro') || descLower.includes('vehículo') || descLower.includes('spa de autos') || descLower.includes('lavado') || descLower.includes('lavadero') || descLower.includes('carol g spa')) {
+        customRec = customRec
+          .replace(/cliente ideal/g, 'dueño de vehículo')
+          .replace(/comprador ideal de tus productos/g, 'dueño de vehículo')
+          .replace(/el cliente/g, 'el dueño de vehículo')
+          .replace(/tus productos/g, 'tus servicios de spa automotriz')
+          .replace(/productos/g, 'servicios de lavado');
+      } else if (descLower.includes('tecnología') || descLower.includes('laptop') || descLower.includes('celular') || descLower.includes('tablet') || descLower.includes('computadora')) {
+        customRec = customRec
+          .replace(/cliente ideal/g, 'comprador de tecnología')
+          .replace(/comprador ideal de tus productos/g, 'comprador de tecnología')
+          .replace(/el cliente/g, 'el usuario de tecnología')
+          .replace(/tus productos/g, 'tus dispositivos tecnológicos')
+          .replace(/productos/g, 'productos tecnológicos');
+      }
+    }
+
+    // Adaptar según tiempo de operación (madurez)
+    if (operatingTime === 'iniciando') {
+      if (rec.includes('Define 3 objetivos') || rec.includes('Define 3 objetivos concretos')) {
+        customRec = 'Define 1 único objetivo comercial enfocado en validar tu oferta y conseguir tus primeros clientes.';
+      }
+      if (rec.includes('Reserva al menos el 5%')) {
+        customRec = 'Invierte lo mínimo viable para validar, priorizando el esfuerzo orgánico y el boca a boca.';
+      }
+    } else if (operatingTime === 'trayectoria' && score < 50) {
+      if (rec.includes('Identifica 3 competidores')) {
+        customRec = 'Identifica 3 competidores más jóvenes que estén usando canales digitales e imita sus mejores prácticas.';
+      }
+      if (rec.includes('Enfócate en UN solo canal')) {
+        customRec = 'Aprovecha tu base de clientes tradicionales y digitaliza tu primer canal de comunicación oficial (WhatsApp o Instagram).';
+      }
+    }
+
+    return customRec;
+  });
 }

@@ -12,10 +12,20 @@ export type AnswerValue = {
   numberValue?: number;
 };
 
-export type AuditScreen = 'landing' | 'intro' | 'question' | 'results';
+export type AuditScreen = 'landing' | 'onboarding' | 'intro' | 'question' | 'lead_capture' | 'results';
+
+export interface OnboardingData {
+  companyName: string;
+  description: string;
+  country: string;
+  businessType: string;
+  operatingTime: string;
+  aiUsage: string;
+}
 
 export function useAudit() {
   const [screen, setScreen] = useState<AuditScreen>('landing');
+  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [currentAreaIndex, setCurrentAreaIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
@@ -70,6 +80,11 @@ export function useAudit() {
   const startAudit = useCallback(() => {
     setCurrentAreaIndex(0);
     setCurrentQuestionIndex(0);
+    setScreen('onboarding');
+  }, []);
+
+  const submitOnboarding = useCallback((data: OnboardingData) => {
+    setOnboardingData(data);
     setScreen('intro');
   }, []);
 
@@ -85,12 +100,18 @@ export function useAudit() {
       setCurrentQuestionIndex(0);
       setScreen('intro');
     } else {
-      setScreen('results');
+      setScreen('lead_capture');
     }
   }, [currentQuestionIndex, areaQuestions.length, currentAreaIndex]);
 
+  const goToResults = useCallback(() => {
+    setScreen('results');
+  }, []);
+
   const goBack = useCallback(() => {
-    if (screen === 'question' && currentQuestionIndex > 0) {
+    if (screen === 'onboarding') {
+      setScreen('landing');
+    } else if (screen === 'question' && currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
     } else if (screen === 'question' && currentQuestionIndex === 0) {
       setScreen('intro');
@@ -100,7 +121,7 @@ export function useAudit() {
       setCurrentQuestionIndex(prevQuestions.length - 1);
       setScreen('question');
     } else if (screen === 'intro' && currentAreaIndex === 0) {
-      setScreen('landing');
+      setScreen('onboarding');
     }
   }, [screen, currentQuestionIndex, currentAreaIndex]);
 
@@ -164,6 +185,7 @@ export function useAudit() {
 
   const resetAudit = useCallback(() => {
     setScreen('landing');
+    setOnboardingData(null);
     setCurrentAreaIndex(0);
     setCurrentQuestionIndex(0);
     setAnswers({});
@@ -172,9 +194,9 @@ export function useAudit() {
   const isLastQuestion = currentAreaIndex === areas.length - 1 && currentQuestionIndex === areaQuestions.length - 1;
 
   return {
-    screen, currentArea, currentQuestion, currentQuestionIndex, currentAreaIndex,
+    screen, onboardingData, currentArea, currentQuestion, currentQuestionIndex, currentAreaIndex,
     areaQuestions, answers, totalAnswered, globalQuestionNumber, isLastQuestion,
-    setAnswer, isCurrentAnswered, startAudit, startArea, goNext, goBack,
+    setAnswer, isCurrentAnswered, startAudit, submitOnboarding, startArea, goNext, goBack, goToResults,
     areaScores, totalScore, resetAudit,
   };
 }
