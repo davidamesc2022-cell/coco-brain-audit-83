@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Lead {
   id: string;
@@ -48,6 +49,7 @@ const aiUsageLabels: Record<string, string> = {
 
 export default function Admin() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -96,6 +98,45 @@ export default function Admin() {
     } catch (error: any) {
       console.error('Error deleting lead:', error);
       toast.error('No se pudo eliminar el lead. Asegúrate de ejecutar el script SQL de inicialización en Supabase.');
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedLeadIds(leads.map(lead => lead.id));
+    } else {
+      setSelectedLeadIds([]);
+    }
+  };
+
+  const handleSelectOne = (leadId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedLeadIds(prev => [...prev, leadId]);
+    } else {
+      setSelectedLeadIds(prev => prev.filter(id => id !== leadId));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedLeadIds.length === 0) return;
+    
+    const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente los ${selectedLeadIds.length} leads seleccionados y todo su historial de auditoría?`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const { data, error } = await supabase.rpc('delete_leads_bulk_secure', {
+        lead_ids: selectedLeadIds,
+        admin_password: 'coco2026',
+      });
+
+      if (error) throw error;
+
+      toast.success(`${selectedLeadIds.length} leads eliminados correctamente`);
+      setLeads(prevLeads => prevLeads.filter(l => !selectedLeadIds.includes(l.id)));
+      setSelectedLeadIds([]);
+    } catch (error: any) {
+      console.error('Error deleting bulk leads:', error);
+      toast.error('No se pudieron eliminar los leads. Asegúrate de ejecutar la nueva función delete_leads_bulk_secure en Supabase.');
     }
   };
 
@@ -180,9 +221,16 @@ export default function Admin() {
               Gestiona los prospectos generados por la auditoría y sus perfiles de negocio.
             </p>
           </div>
-          <Button onClick={exportToCSV} variant="outline" className="gap-2 shrink-0">
-            <Download size={16} /> Exportar CSV
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {selectedLeadIds.length > 0 && (
+              <Button onClick={handleDeleteSelected} variant="destructive" className="gap-2 shrink-0">
+                <Trash2 size={16} /> Eliminar seleccionados ({selectedLeadIds.length})
+              </Button>
+            )}
+            <Button onClick={exportToCSV} variant="outline" className="gap-2 shrink-0">
+              <Download size={16} /> Exportar CSV
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -215,7 +263,13 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[60px] text-center">Acción</TableHead>
+                      <TableHead className="w-[50px] text-center">
+                        <Checkbox 
+                          checked={leads.length > 0 && selectedLeadIds.length === leads.length}
+                          onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                          aria-label="Seleccionar todos"
+                        />
+                      </TableHead>
                       <TableHead className="min-w-[120px]">Fecha</TableHead>
                       <TableHead>Nombre</TableHead>
                       <TableHead>Empresa</TableHead>
@@ -227,21 +281,18 @@ export default function Admin() {
                       <TableHead>Email</TableHead>
                       <TableHead>Teléfono</TableHead>
                       <TableHead className="text-right">Puntaje</TableHead>
+                      <TableHead className="text-right w-[60px]">Acción</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {leads.map((lead) => (
                       <TableRow key={lead.id}>
                         <TableCell className="text-center">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDeleteLead(lead.id, lead.full_name)}
-                            className="text-muted-foreground hover:text-destructive transition-colors h-7 w-7"
-                            title="Eliminar lead"
-                          >
-                            <Trash2 size={13} />
-                          </Button>
+                          <Checkbox 
+                            checked={selectedLeadIds.includes(lead.id)}
+                            onCheckedChange={(checked) => handleSelectOne(lead.id, !!checked)}
+                            aria-label={`Seleccionar lead de ${lead.full_name}`}
+                          />
                         </TableCell>
                         <TableCell className="text-xs">{format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
                         <TableCell className="font-medium text-xs md:text-sm">{lead.full_name}</TableCell>
@@ -255,6 +306,17 @@ export default function Admin() {
                         <TableCell className="text-xs">{lead.phone}</TableCell>
                         <TableCell className="text-right font-bold text-xs md:text-sm">
                           {lead.audits?.[0]?.total_score ? `${lead.audits[0].total_score}/100` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDeleteLead(lead.id, lead.full_name)}
+                            className="text-muted-foreground hover:text-destructive transition-colors h-7 w-7"
+                            title="Eliminar lead"
+                          >
+                            <Trash2 size={13} />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
