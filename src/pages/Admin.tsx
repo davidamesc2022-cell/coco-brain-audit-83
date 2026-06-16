@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Download, Users, Lock, Trash2 } from 'lucide-react';
+import { Loader2, Download, Users, Lock, Trash2, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,9 @@ interface Lead {
   company_name: string;
   description?: string;
   business_type?: string;
+  client_type?: string;
+  acquisition_channel?: string;
+  file_url?: string;
   operating_time?: string;
   ai_usage?: string;
   country?: string;
@@ -77,6 +80,19 @@ const businessTypeLabels: Record<string, string> = {
   servicios: '💼 Servicios',
   local: '📍 Negocio Local',
   digital: '🖥️ Digital / Tech',
+};
+
+const clientTypeLabels: Record<string, string> = {
+  B2C: '👥 B2C',
+  B2B: '🏢 B2B',
+  ambos: '🤝 Ambos',
+};
+
+const acquisitionChannelLabels: Record<string, string> = {
+  redes: '📱 Redes Soc.',
+  web: '🌐 Web/SEO',
+  local: '📍 Físico',
+  venta_directa: '📞 Directa/Recom.',
 };
 
 const operatingTimeLabels: Record<string, string> = {
@@ -187,7 +203,11 @@ export default function Admin() {
   };
 
   const exportToCSV = () => {
-    const headers = ['Fecha', 'Nombre', 'Email', 'Teléfono', 'Empresa', 'Descripción', 'País', 'Sector', 'Madurez', 'Uso IA', 'Puntaje', 'Cuello de Botella', 'Ruta Recomendada'];
+    const headers = [
+      'Fecha', 'Nombre', 'Email', 'Teléfono', 'Empresa', 'Descripción', 
+      'País', 'Sector', 'Tipo Cliente', 'Canal Captación', 'Dossier/Brief', 
+      'Madurez', 'Uso IA', 'Puntaje', 'Cuello de Botella', 'Ruta Recomendada'
+    ];
     const csvData = leads.map(lead => {
       const diagnostics = getLeadDiagnostics(lead);
       return [
@@ -199,6 +219,9 @@ export default function Admin() {
         lead.description || 'N/A',
         lead.country || 'N/A',
         businessTypeLabels[lead.business_type || ''] || lead.business_type || 'N/A',
+        clientTypeLabels[lead.client_type || ''] || lead.client_type || 'N/A',
+        acquisitionChannelLabels[lead.acquisition_channel || ''] || lead.acquisition_channel || 'N/A',
+        lead.file_url || 'N/A',
         operatingTimeLabels[lead.operating_time || ''] || lead.operating_time || 'N/A',
         aiUsageLabels[lead.ai_usage || ''] || lead.ai_usage || 'N/A',
         lead.audits?.[0]?.total_score || 'N/A',
@@ -330,6 +353,9 @@ export default function Admin() {
                       <TableHead>Descripción</TableHead>
                       <TableHead>País</TableHead>
                       <TableHead>Sector</TableHead>
+                      <TableHead>Tipo Cliente</TableHead>
+                      <TableHead>Captación</TableHead>
+                      <TableHead>Briefing</TableHead>
                       <TableHead>Madurez</TableHead>
                       <TableHead>Uso IA</TableHead>
                       <TableHead>Email</TableHead>
@@ -358,6 +384,20 @@ export default function Admin() {
                           <TableCell className="text-xs max-w-[180px] truncate" title={lead.description}>{lead.description || '-'}</TableCell>
                           <TableCell className="text-xs">{lead.country || '-'}</TableCell>
                           <TableCell className="text-xs">{businessTypeLabels[lead.business_type || ''] || lead.business_type || '-'}</TableCell>
+                          <TableCell className="text-xs">{clientTypeLabels[lead.client_type || ''] || lead.client_type || '-'}</TableCell>
+                          <TableCell className="text-xs">{acquisitionChannelLabels[lead.acquisition_channel || ''] || lead.acquisition_channel || '-'}</TableCell>
+                          <TableCell className="text-xs">
+                            {lead.file_url ? (
+                              <a 
+                                href={lead.file_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline font-semibold"
+                              >
+                                <Paperclip size={12} /> Ver Doc
+                              </a>
+                            ) : '-'}
+                          </TableCell>
                           <TableCell className="text-xs">{operatingTimeLabels[lead.operating_time || ''] || lead.operating_time || '-'}</TableCell>
                           <TableCell className="text-xs">{aiUsageLabels[lead.ai_usage || ''] || lead.ai_usage || '-'}</TableCell>
                           <TableCell className="text-xs">{lead.email}</TableCell>

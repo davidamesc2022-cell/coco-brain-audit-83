@@ -21,6 +21,9 @@ export interface OnboardingData {
   businessType: string;
   operatingTime: string;
   aiUsage: string;
+  clientType: string;
+  acquisitionChannel: string;
+  fileUrl?: string;
 }
 
 export function useAudit() {

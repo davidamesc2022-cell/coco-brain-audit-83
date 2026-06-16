@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Sparkles, Building, Globe, Clock, UserCheck } from 'lucide-react';
+import { ArrowRight, Sparkles, Building, Globe, Clock, UserCheck, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export interface OnboardingData {
   companyName: string;
@@ -11,6 +12,9 @@ export interface OnboardingData {
   businessType: string;
   operatingTime: string;
   aiUsage: string;
+  clientType: string;
+  acquisitionChannel: string;
+  fileUrl?: string;
 }
 
 interface OnboardingScreenProps {
@@ -29,6 +33,19 @@ const businessTypes = [
   { value: 'servicios', label: '💼 Servicios profesionales / Consultoría / Educación' },
   { value: 'local', label: '📍 Negocio Local / Tienda física o de servicios zonales' },
   { value: 'digital', label: '🖥️ Tecnología / E-commerce / Infoproductos' },
+];
+
+const clientTypes = [
+  { value: 'B2C', label: '👥 Consumidores finales (B2C)' },
+  { value: 'B2B', label: '🏢 Otras empresas / Negocios (B2B)' },
+  { value: 'ambos', label: '🤝 Ambos por igual (B2C y B2B)' },
+];
+
+const acquisitionChannels = [
+  { value: 'redes', label: '📱 Redes Sociales (Instagram, TikTok, WhatsApp)' },
+  { value: 'web', label: '🌐 Página Web / Buscadores (Google, SEO, E-commerce)' },
+  { value: 'local', label: '📍 Local físico / Tráfico a pie' },
+  { value: 'venta_directa', label: '📞 Venta directa / Llamadas / Recomendaciones' },
 ];
 
 const operatingTimes = [
@@ -50,24 +67,67 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
   const [description, setDescription] = useState('');
   const [country, setCountry] = useState('Perú');
   const [businessType, setBusinessType] = useState('');
+  const [clientType, setClientType] = useState('');
+  const [acquisitionChannel, setAcquisitionChannel] = useState('');
   const [operatingTime, setOperatingTime] = useState('');
   const [aiUsage, setAiUsage] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName.trim() || !description.trim() || !businessType || !operatingTime || !aiUsage) {
+    if (!companyName.trim() || !description.trim() || !businessType || !clientType || !acquisitionChannel || !operatingTime || !aiUsage) {
       setError('Por favor, completa todas las preguntas para personalizar tu diagnóstico.');
       return;
     }
+
+    if (description.trim().length < 25) {
+      setError('Por favor, escribe una descripción de tu negocio de al menos 25 caracteres para poder darte un diagnóstico preciso.');
+      return;
+    }
+
     setError('');
+    setIsUploading(true);
+
+    let fileUrl = '';
+    if (file) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('lead-documents')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('lead-documents')
+          .getPublicUrl(filePath);
+
+        fileUrl = publicUrl;
+      } catch (err: any) {
+        console.error('Error al subir archivo:', err);
+        setError('No se pudo cargar el archivo. Por favor, inténtalo de nuevo o continúa sin archivo.');
+        setIsUploading(false);
+        return;
+      }
+    }
+
+    setIsUploading(false);
     onSubmit({
       companyName: companyName.trim(),
       description: description.trim(),
       country,
       businessType,
+      clientType,
+      acquisitionChannel,
       operatingTime,
       aiUsage,
+      fileUrl,
     });
   };
 
@@ -95,11 +155,11 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
             ¡Hola! Te saludo cordialmente.
           </h2>
           <p className="text-muted-foreground text-sm max-w-md">
-            Antes de iniciar con tu diagnóstico, cuéntame brevemente sobre tu negocio. Así el algoritmo Coco Brain adaptará dinámicamente tu **Plan de Acción de 90 Días** en base a tu sector y madurez.
+            Antes de iniciar con tu diagnóstico, cuéntame sobre tu negocio. Así el algoritmo Coco Brain adaptará dinámicamente tu **Plan de Acción de 90 Días** en base a tu sector y madurez.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           
           {/* Nombre de la Empresa */}
           <div className="space-y-1.5">
@@ -113,6 +173,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               className="rounded-xl h-11"
+              disabled={isUploading}
             />
           </div>
 
@@ -127,9 +188,18 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
               placeholder="Ej: Vendemos calzado deportivo y zapatillas de marcas conocidas al por mayor y menor, o brindamos servicios estéticos de lavado de autos (Spa de autos)."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              className="flex min-h-[90px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               rows={3}
+              disabled={isUploading}
             />
+            <div className="flex justify-between items-center text-xs mt-1 px-1">
+              <span className="text-muted-foreground italic">
+                Tip: ¿Qué vendes y a quién está dirigido?
+              </span>
+              <span className={description.trim().length >= 25 ? "text-green-600 font-semibold" : "text-amber-600 font-semibold"}>
+                {description.trim().length}/25 caracteres mín.
+              </span>
+            </div>
           </div>
 
           {/* País */}
@@ -143,6 +213,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isUploading}
             >
               {countries.map(c => (
                 <option key={c} value={c}>{c}</option>
@@ -164,11 +235,62 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                   onClick={() => setBusinessType(type.value)}
                   className={`text-left p-3 rounded-xl border text-sm transition-all flex items-center justify-between ${
                     businessType === type.value 
-                      ? 'border-primary bg-primary/5 text-foreground font-medium' 
+                      ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
+                  disabled={isUploading}
                 >
                   {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tipo de Cliente (B2B/B2C) */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <UserCheck size={16} className="text-muted-foreground" />
+              ¿Quién es tu cliente principal?
+            </Label>
+            <div className="grid grid-cols-1 gap-2">
+              {clientTypes.map(type => (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => setClientType(type.value)}
+                  className={`text-left p-3 rounded-xl border text-sm transition-all flex items-center justify-between ${
+                    clientType === type.value 
+                      ? 'border-primary bg-primary/5 text-foreground font-semibold' 
+                      : 'border-border bg-background hover:bg-muted text-muted-foreground'
+                  }`}
+                  disabled={isUploading}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Canal de Ventas/Captación */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <Globe size={16} className="text-muted-foreground" />
+              ¿Cuál es tu canal de ventas o captación principal?
+            </Label>
+            <div className="grid grid-cols-1 gap-2">
+              {acquisitionChannels.map(channel => (
+                <button
+                  key={channel.value}
+                  type="button"
+                  onClick={() => setAcquisitionChannel(channel.value)}
+                  className={`text-left p-3 rounded-xl border text-sm transition-all flex items-center justify-between ${
+                    acquisitionChannel === channel.value 
+                      ? 'border-primary bg-primary/5 text-foreground font-semibold' 
+                      : 'border-border bg-background hover:bg-muted text-muted-foreground'
+                  }`}
+                  disabled={isUploading}
+                >
+                  {channel.label}
                 </button>
               ))}
             </div>
@@ -188,9 +310,10 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                   onClick={() => setOperatingTime(time.value)}
                   className={`text-left p-3 rounded-xl border text-sm transition-all flex items-center justify-between ${
                     operatingTime === time.value 
-                      ? 'border-primary bg-primary/5 text-foreground font-medium' 
+                      ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
+                  disabled={isUploading}
                 >
                   {time.label}
                 </button>
@@ -201,7 +324,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
           {/* Inteligencia Artificial */}
           <div className="space-y-1.5">
             <Label className="text-sm font-semibold flex items-center gap-2">
-              <UserCheck size={16} className="text-muted-foreground" />
+              <Sparkles size={16} className="text-muted-foreground" />
               ¿Qué tanto utilizas Inteligencia Artificial (IA) en tu negocio?
             </Label>
             <div className="grid grid-cols-1 gap-2">
@@ -212,13 +335,68 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                   onClick={() => setAiUsage(usage.value)}
                   className={`text-left p-3 rounded-xl border text-sm transition-all flex items-center justify-between ${
                     aiUsage === usage.value 
-                      ? 'border-primary bg-primary/5 text-foreground font-medium' 
+                      ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
+                  disabled={isUploading}
                 >
                   {usage.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Carga de Archivo (Opcional) */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <UploadCloud size={16} className="text-muted-foreground" />
+              ¿Tienes algún briefing o presentación de tu negocio? (Opcional)
+            </Label>
+            <div className="border border-dashed border-border rounded-2xl p-4 bg-muted/20 text-center relative hover:bg-muted/30 transition-colors">
+              {!file ? (
+                <label className="cursor-pointer flex flex-col items-center justify-center space-y-1">
+                  <UploadCloud className="h-8 w-8 text-muted-foreground mb-1" />
+                  <span className="text-sm font-semibold text-foreground">Cargar briefing / presentación</span>
+                  <span className="text-xs text-muted-foreground">PDF, Word o imagen (Máx. 10MB)</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const selectedFile = e.target.files?.[0];
+                      if (selectedFile) {
+                        if (selectedFile.size > 10 * 1024 * 1024) {
+                          setError('El archivo supera el tamaño máximo de 10MB.');
+                          return;
+                        }
+                        setFile(selectedFile);
+                        setError('');
+                      }
+                    }}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </label>
+              ) : (
+                <div className="flex items-center justify-between bg-background p-2.5 rounded-lg border border-border">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <FileText className="h-5 w-5 text-primary shrink-0" />
+                    <span className="text-xs font-semibold text-foreground truncate max-w-[200px]" title={file.name}>
+                      {file.name}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFile(null)}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                    disabled={isUploading}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -234,14 +412,24 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
               variant="outline"
               onClick={onBack}
               className="flex-1 py-6 rounded-xl text-base"
+              disabled={isUploading}
             >
               Atrás
             </Button>
             <Button 
               type="submit" 
               className="flex-[2] py-6 rounded-xl text-base font-semibold"
+              disabled={isUploading}
             >
-              Comenzar Diagnóstico <ArrowRight className="ml-2 h-5 w-5" />
+              {isUploading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Subiendo archivos...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center">
+                  Comenzar Diagnóstico <ArrowRight className="ml-2 h-5 w-5" />
+                </span>
+              )}
             </Button>
           </div>
 

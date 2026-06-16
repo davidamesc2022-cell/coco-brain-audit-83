@@ -56,6 +56,9 @@ export function LeadCaptureScreen({ onSuccess, auditData, onboardingData }: Lead
             operating_time: onboardingData?.operatingTime || '',
             ai_usage: onboardingData?.aiUsage || '',
             country: onboardingData?.country || '',
+            client_type: onboardingData?.clientType || '',
+            acquisition_channel: onboardingData?.acquisitionChannel || '',
+            file_url: onboardingData?.fileUrl || '',
           }
         ])
         .select()
