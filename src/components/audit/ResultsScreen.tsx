@@ -103,7 +103,16 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
 
   const strengths = sortedAreas.slice(0, 2);
   const weaknesses = sortedAreas.slice(-2).reverse();
-  const bottleneck = sortedAreas[sortedAreas.length - 1];
+  
+  // Si el puntaje global es crítico (< 40), excluimos Post-Venta (6) de ser el cuello de botella principal,
+  // ya que a ese nivel el problema crítico es siempre fundacional.
+  let bottleneck = sortedAreas[sortedAreas.length - 1];
+  if (totalScore < 40) {
+    const foundationalAreas = sortedAreas.filter(a => a.areaId !== 6);
+    if (foundationalAreas.length > 0) {
+      bottleneck = foundationalAreas[foundationalAreas.length - 1];
+    }
+  }
 
   const bottleneckInfo = bottleneckData[bottleneck.areaId] || {
     impact: "Sin corrección, el crecimiento de tu facturación seguirá viéndose afectado.",

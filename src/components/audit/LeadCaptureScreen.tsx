@@ -85,8 +85,17 @@ export function LeadCaptureScreen({ onSuccess, auditData, onboardingData }: Lead
         areaId: parseInt(areaId),
         score,
       }));
-      scoresArray.sort((a, b) => a.score - b.score);
-      const bottleneckAreaId = scoresArray[0]?.areaId || 1;
+
+      let filteredScores = scoresArray;
+      if (auditData.totalScore < 40) {
+        filteredScores = scoresArray.filter(item => item.areaId !== 6);
+      }
+      if (filteredScores.length === 0) {
+        filteredScores = scoresArray;
+      }
+
+      filteredScores.sort((a, b) => a.score - b.score);
+      const bottleneckAreaId = filteredScores[0]?.areaId || 1;
 
       const areaNames: Record<number, string> = {
         1: 'Análisis Situacional',

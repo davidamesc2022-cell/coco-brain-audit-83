@@ -45,9 +45,17 @@ const getLeadDiagnostics = (lead: Lead) => {
     return { bottleneck: '-', route: '-' };
   }
 
+  let filteredScores = scoresArray;
+  if (audit.total_score < 40) {
+    filteredScores = scoresArray.filter(item => item.areaId !== 6);
+  }
+  if (filteredScores.length === 0) {
+    filteredScores = scoresArray;
+  }
+
   // Ordenamos de menor a mayor
-  scoresArray.sort((a, b) => a.score - b.score);
-  const bottleneckAreaId = scoresArray[0]?.areaId || 1;
+  filteredScores.sort((a, b) => a.score - b.score);
+  const bottleneckAreaId = filteredScores[0]?.areaId || 1;
 
   const areaNames: Record<number, string> = {
     1: 'Análisis Situacional',
