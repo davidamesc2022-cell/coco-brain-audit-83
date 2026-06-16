@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { areas, getLevelInfo } from '@/data/auditData';
 import { ScoreRing } from './ScoreRing';
 import { OnboardingData } from '@/hooks/useAudit';
-import { Mail, MessageSquare, Copy, Check, Share2, RotateCcw } from 'lucide-react';
+import { Mail, MessageSquare, Copy, Check, Share2, RotateCcw, Award, AlertTriangle, Play, HelpCircle, ShieldAlert, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
-// TODO: Reemplaza este número por tu número de WhatsApp real (código de país + número, ej: 51987654321)
+// Número de WhatsApp configurado (código de país + número)
 const WHATSAPP_NUMBER = '51913321222'; 
 
 interface ResultsScreenProps {
@@ -16,8 +16,34 @@ interface ResultsScreenProps {
   onboardingData: OnboardingData | null;
 }
 
+const bottleneckData: Record<number, { impact: string; priority: string }> = {
+  1: {
+    impact: "Sin un análisis real de tu punto de partida, de tu competencia y de tu sector, estarás tomando decisiones de marketing basadas en suposiciones, lo que usualmente lleva a desperdiciar presupuesto en canales o públicos equivocados.",
+    priority: "Tu primera prioridad es detenerte a analizar el panorama actual. Investiga qué está haciendo tu competencia, define con datos el estado de tu mercado y valida dónde están realmente tus oportunidades antes de invertir más dinero."
+  },
+  2: {
+    impact: "Si no sabes exactamente a dónde vas, es imposible medir si tus campañas o tu equipo están funcionando. Seguirás ejecutando acciones de marketing sueltas sin saber si realmente están aportando a la facturación final.",
+    priority: "Tu primera prioridad es definir metas numéricas claras para los próximos 90 días: ¿cuántos clientes nuevos necesitas?, ¿cuánto quieres facturar? y ¿cuál es tu presupuesto máximo de adquisición?"
+  },
+  3: {
+    impact: "Si tu marca se comunica igual que el resto, tu negocio se convertirá en un 'comodity' y te verás obligado a competir únicamente por precio bajo, reduciendo tus márgenes y perdiendo clientes valiosos.",
+    priority: "Tu primera prioridad es estructurar tu propuesta única de valor. Define qué te hace diferente de la competencia y aclara tu mensaje principal para que tu cliente ideal entienda de inmediato por qué debe elegirte a ti."
+  },
+  4: {
+    impact: "Puedes tener un excelente producto o servicio, pero si tus redes, correos o publicidad no comunican con claridad y persuasión, el mercado no te prestará atención y tus publicaciones no generarán ventas.",
+    priority: "Tu primera prioridad es ordenar tu comunicación. Crea una ruta de contenidos atractivos conectada directamente con tu oferta, y selecciona solo los 2 o 3 canales donde tu cliente ideal está más activo para enfocar tus esfuerzos."
+  },
+  5: {
+    impact: "Estás operando a ciegas. Sin registrar tus métricas de conversión, costo de adquisición y retorno de inversión, no sabrás qué acciones te dan dinero y cuáles te lo están haciendo perder, haciendo imposible escalar el negocio.",
+    priority: "Tu primera prioridad es implementar un cuadro de control simple. Empieza a registrar cada semana de dónde vienen tus leads, cuántos pasan a ser clientes y cuál es tu porcentaje real de conversión."
+  },
+  6: {
+    impact: "Tu negocio tiene un balde roto: estás gastando mucho dinero en conseguir clientes nuevos solo para perderlos inmediatamente después de la primera compra. Esto hace que tu costo de adquisición sea altísimo y reduce el valor de vida del cliente.",
+    priority: "Tu primera prioridad es fidelizar a quienes ya te compraron. Diseña una secuencia sencilla de seguimiento post-compra (por WhatsApp o correo), pide testimonios a tus clientes actuales y ofréceles promociones exclusivas para incentivar la recompra."
+  }
+};
+
 export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboardingData }: ResultsScreenProps) {
-  const level = getLevelInfo(totalScore);
   const [animated, setAnimated] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -33,50 +59,143 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Texto de acuerdo al nivel para el agradecimiento
-  let levelDescription = '';
-  if (totalScore <= 40) {
-    levelDescription = 'un nivel Crítico. Esto indica que existen debilidades importantes en tus procesos de marketing que requieren atención inmediata para evitar perder clientes y presupuesto.';
-  } else if (totalScore <= 60) {
-    levelDescription = 'un nivel En Desarrollo. Tu negocio tiene bases sólidas, pero hay puntos ciegos clave que están frenando el crecimiento de tu facturación.';
-  } else if (totalScore <= 80) {
-    levelDescription = 'un nivel Intermedio. Cuentas con un marketing estructurado, pero hay oportunidades importantes para optimizar y escalar tus conversiones.';
+  const companyName = onboardingData?.companyName || 'tu negocio';
+
+  // 1. Obtener niveles y diagnóstico ejecutivo
+  let levelLabel = "";
+  let levelColor = "";
+  let executiveDiagnosis = "";
+
+  if (totalScore <= 39) {
+    levelLabel = "Negocio en caos operativo";
+    levelColor = "#EF4444"; // Rojo
+    executiveDiagnosis = "Tu negocio se encuentra actualmente en un estado de caos operativo. Las acciones de marketing se ejecutan de forma reactiva y desorganizada, lo que consume gran parte de tu energía y presupuesto sin generar retornos estables. El primer paso es estructurar las bases de tu comunicación y ventas para frenar las fugas de dinero.";
+  } else if (totalScore <= 59) {
+    levelLabel = "Negocio con potencial, pero sin sistema";
+    levelColor = "#F97316"; // Naranja
+    executiveDiagnosis = "Tu negocio cuenta con un gran potencial y un producto/servicio validado, pero carece de un sistema comercial ordenado. Los clientes llegan principalmente de forma espontánea o por esfuerzos aislados. Necesitas estructurar tus procesos de captación y contenido para no depender del día a día.";
+  } else if (totalScore <= 74) {
+    levelLabel = "Negocio en construcción estratégica";
+    levelColor = "#EAB308"; // Amarillo
+    executiveDiagnosis = "Tu negocio se encuentra en construcción estratégica. Cuentas con un marketing estructurado en ciertas áreas, pero varios procesos funcionan desconectados entre sí. El siguiente paso es unificar tu mensaje, optimizar tus canales de venta y automatizar el seguimiento para dar el salto de crecimiento.";
+  } else if (totalScore <= 89) {
+    levelLabel = "Negocio con sistema en crecimiento";
+    levelColor = "#3B82F6"; // Azul
+    executiveDiagnosis = "¡Felicitaciones! Cuentas con un negocio con sistema en crecimiento. Tienes una base sólida, tracción en ventas y orden en tus operaciones. Tu oportunidad principal ahora está en afinar la conversión, medir al milímetro el costo de adquisición y optimizar la fidelización para escalar la rentabilidad.";
   } else {
-    levelDescription = 'un nivel Avanzado. ¡Felicidades! Tienes procesos de marketing muy saludables y listos para seguir innovando.';
+    levelLabel = "Negocio optimizado y escalable";
+    levelColor = "#10B981"; // Verde
+    executiveDiagnosis = "Tu negocio está optimizado y es altamente escalable. Cuentas con procesos eficientes, medición constante y una marca diferenciada. Tu prioridad estratégica es la innovación, la implementación avanzada de IA en procesos y el liderazgo en tu sector comercial.";
   }
 
-  const companyName = onboardingData?.companyName || 'tu negocio';
-  
-  // URL de WhatsApp pre-configurada
-  const whatsappMessage = `Hola David, acabo de completar mi auditoría para ${companyName} y obtuve un puntaje de ${totalScore}/100 (${level.label}). Quiero solicitar mi Plan de Acción de 90 días en PDF para implementarlo.`;
+  // 2. Ordenar áreas de mayor a menor puntuación para extraer fortalezas y debilidades
+  const sortedAreas = [...areaScores]
+    .map(scoreData => {
+      const areaInfo = areas.find(a => a.id === scoreData.areaId)!;
+      return {
+        ...scoreData,
+        name: areaInfo.name,
+        icon: areaInfo.icon,
+        colorHex: areaInfo.colorHex
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const strengths = sortedAreas.slice(0, 2);
+  const weaknesses = sortedAreas.slice(-2).reverse();
+  const bottleneck = sortedAreas[sortedAreas.length - 1];
+
+  const bottleneckInfo = bottleneckData[bottleneck.areaId] || {
+    impact: "Sin corrección, el crecimiento de tu facturación seguirá viéndose afectado.",
+    priority: "Reorganiza tus prioridades de marketing e implementa medición."
+  };
+
+  // 3. Definir la ruta recomendada y el plan de acción inicial
+  let recommendedRoute = "";
+  let routeDescription = "";
+  let actionSteps: string[] = [];
+
+  if (bottleneck.areaId === 2 || bottleneck.areaId === 3 || bottleneck.areaId === 4) {
+    recommendedRoute = "Método 4C";
+    routeDescription = "Porque necesitas ordenar claridad, creatividad, comunicación y conversión antes de avanzar hacia una estrategia más compleja.";
+    actionSteps = [
+      "Clarificar tu cliente ideal, propuesta única de valor y mensaje principal.",
+      "Crear una ruta de contenido estratégica conectada directamente con tu oferta.",
+      "Diseñar un sistema básico de respuesta, seguimiento y cierre de oportunidades comerciales."
+    ];
+  } else if (bottleneck.areaId === 1 || bottleneck.areaId === 5) {
+    recommendedRoute = "Marketing Base con SOSTAC";
+    routeDescription = "Porque necesitas estructurar situación, objetivos, estrategia, tácticas, acción y control de manera sistemática.";
+    actionSteps = [
+      "Realizar un análisis situacional profundo de tu competencia y tu posición en el mercado.",
+      "Definir objetivos comerciales y de marketing específicos (KPIs) para los próximos 90 días.",
+      "Implementar una plantilla básica de control de conversión para medir con precisión el origen de tus leads."
+    ];
+  } else {
+    recommendedRoute = "Implementación Coco Brain";
+    routeDescription = "Porque tu negocio necesita una intervención completa de sistemas comerciales, procesos, canales, ventas, métricas y optimización.";
+    actionSteps = [
+      "Diseñar una secuencia rápida de seguimiento y fidelización de clientes por WhatsApp.",
+      "Implementar herramientas digitales y de automatización para optimizar tiempos de respuesta.",
+      "Auditar a tus últimos 10 clientes para identificar oportunidades de recompra inmediata."
+    ];
+  }
+
+  // Si el puntaje global es crítico, sugerir directamente la Implementación Completa
+  if (totalScore <= 39) {
+    recommendedRoute = "Implementación Coco Brain";
+    routeDescription = "Porque tu negocio se encuentra en caos operativo y requiere una intervención integral urgente de todo tu sistema comercial.";
+    actionSteps = [
+      "Frenar la pérdida de leads automatizando tus primeras respuestas comerciales en canales digitales.",
+      "Definir tu oferta principal y tu propuesta de valor clave para diferenciarte.",
+      "Construir una base de datos unificada de clientes para iniciar seguimiento estructurado de inmediato."
+    ];
+  }
+
+  // 4. Configurar URLs dinámicas para el agendamiento enfocado en la ruta
+  const whatsappMessage = `Hola David, acabo de completar mi auditoría para ${companyName} y obtuve un puntaje de ${totalScore}/100 (${levelLabel}). Mi Ruta Recomendada es: ${recommendedRoute}. Quiero agendar una llamada de diagnóstico gratuita contigo.`;
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
 
-  // Mailto pre-configurado
-  const mailtoSubject = `Quiero mi Plan de Acción de 90 días - ${companyName}`;
-  const mailtoBody = `Hola David,\n\nobtuve un puntaje de ${totalScore}/100 en la auditoría de ${companyName} (${level.label}) y me interesa recibir el plan de acción de 90 días en PDF para analizarlo.\n\nSaludos.`;
+  const mailtoSubject = `Quiero agendar mi llamada de diagnóstico - ${companyName}`;
+  const mailtoBody = `Hola David,\n\nobtuve un puntaje de ${totalScore}/100 en la auditoría de ${companyName} (${levelLabel}).\n\nMi Ruta Recomendada es: ${recommendedRoute}.\n\nMe interesa agendar una llamada de diagnóstico gratuita contigo.\n\nSaludos.`;
   const mailtoUrl = `mailto:hablemos@davidamesc.com?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center animate-fade-slide-up">
       <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center gap-6">
-        <h1 className="text-2xl font-bold text-foreground">Tu diagnóstico de marketing</h1>
+        
+        {/* TÍTULO */}
+        <h1 className="text-2xl font-bold text-foreground text-center">Tu diagnóstico de marketing</h1>
 
-        {/* Score Ring */}
-        <div className="relative">
-          <ScoreRing score={totalScore} size={200} strokeWidth={14} animate={animated} />
+        {/* 1. PUNTAJE GENERAL */}
+        <div className="relative my-2">
+          <ScoreRing score={totalScore} size={190} strokeWidth={13} animate={animated} />
         </div>
 
-        {/* Level Badge */}
-        <span
-          className="px-5 py-2 rounded-full font-semibold text-sm"
-          style={{ backgroundColor: level.colorHex + '15', color: level.colorHex }}
-        >
-          {level.label}
-        </span>
+        {/* 2. NIVEL ACTUAL DEL NEGOCIO */}
+        <div className="text-center w-full">
+          <span
+            className="px-5 py-2 rounded-full font-bold text-sm inline-block shadow-sm"
+            style={{ backgroundColor: levelColor + '15', color: levelColor, border: `1px solid ${levelColor}30` }}
+          >
+            Nivel actual: {levelLabel}
+          </span>
+        </div>
 
-        {/* Area Detail */}
+        {/* 3. DIAGNÓSTICO EJECUTIVO */}
+        <div className="w-full audit-card p-5 bg-card border-border shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-primary font-bold text-sm">
+            <Sparkles size={16} />
+            <span>Diagnóstico Ejecutivo</span>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {executiveDiagnosis}
+          </p>
+        </div>
+
+        {/* 4. PUNTAJE POR ÁREAS */}
         <div className="w-full audit-card p-5">
-          <h3 className="font-semibold text-foreground mb-4">Detalle por área</h3>
+          <h3 className="font-bold text-foreground text-sm mb-4">Detalle por área</h3>
           <div className="flex flex-col gap-4">
             {areas.map(area => {
               const scoreData = areaScores.find(s => s.areaId === area.id);
@@ -87,11 +206,11 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
                   <span className="text-xl shrink-0">{area.icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline mb-1">
-                      <span className="text-sm font-medium text-foreground truncate">{area.name}</span>
-                      <span className="text-sm font-bold ml-2" style={{ color: areaLevel.colorHex }}>{score}</span>
+                      <span className="text-xs font-semibold text-foreground truncate">{area.name}</span>
+                      <span className="text-xs font-bold ml-2" style={{ color: areaLevel.colorHex }}>{score}/20</span>
                     </div>
                     <div className="h-2 bg-border rounded-full overflow-hidden">
-                      <AnimatedBar score={score} color={areaLevel.colorHex} animate={animated} />
+                      <AnimatedBar score={(score / 20) * 100} color={areaLevel.colorHex} animate={animated} />
                     </div>
                   </div>
                 </div>
@@ -100,26 +219,99 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
           </div>
         </div>
 
-        {/* Tarjeta de Agradecimiento y CTA Persuasivo (Reemplaza la visualización directa del plan) */}
-        <div className="w-full bg-gradient-to-br from-primary/10 to-primary/5 rounded-3xl border border-primary/20 p-6 text-center shadow-lg space-y-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
-            🎉
+        {/* 5 y 6. PUNTOS FUERTES Y DEBILIDADES */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          {/* PUNTOS FUERTES */}
+          <div className="audit-card p-4 bg-green-50/20 border-green-200/50 space-y-2">
+            <div className="flex items-center gap-2 text-green-700 font-bold text-xs">
+              <Award size={16} />
+              <span>Puntos Fuertes</span>
+            </div>
+            <ul className="text-xs text-muted-foreground space-y-1.5">
+              {strengths.map(s => (
+                <li key={s.areaId} className="flex items-start gap-1">
+                  <span>•</span>
+                  <strong>{s.name}</strong>
+                </li>
+              ))}
+            </ul>
           </div>
-          <h3 className="text-lg font-bold text-foreground">¡Felicidades por completar tu auditoría!</h3>
-          
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Hemos registrado tus respuestas con éxito. El diagnóstico indica que <strong>{companyName}</strong> tiene {levelDescription}
+
+          {/* PUNTOS DÉBILES */}
+          <div className="audit-card p-4 bg-red-50/10 border-red-100/50 space-y-2">
+            <div className="flex items-center gap-2 text-red-600 font-bold text-xs">
+              <AlertTriangle size={15} />
+              <span>Puntos Débiles</span>
+            </div>
+            <ul className="text-xs text-muted-foreground space-y-1.5">
+              {weaknesses.map(w => (
+                <li key={w.areaId} className="flex items-start gap-1">
+                  <span>•</span>
+                  <strong>{w.name}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* 7 y 8. CUELLO DE BOTELLA E IMPACTO */}
+        <div className="w-full audit-card p-5 border-l-4 border-l-red-500 bg-red-50/5 space-y-3">
+          <div className="flex items-center gap-2 text-red-600 font-bold text-sm">
+            <ShieldAlert size={16} />
+            <span>Cuello de Botella Principal: {bottleneck.name}</span>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Impacto en tu negocio:</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {bottleneckInfo.impact}
+            </p>
+          </div>
+        </div>
+
+        {/* 9. PRIORIDAD ESTRATÉGICA */}
+        <div className="w-full audit-card p-5 bg-gradient-to-br from-primary/5 to-transparent border-primary/10 space-y-2">
+          <div className="flex items-center gap-2 text-primary font-bold text-sm">
+            <Play size={14} className="fill-primary" />
+            <span>Prioridad Estratégica</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {bottleneckInfo.priority}
           </p>
-          
-          <div className="bg-card border border-border p-4 rounded-2xl text-left space-y-2">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider">¿Qué sigue ahora?</p>
-            <p className="text-sm text-foreground">
-              Tu <strong>Plan de Acción de 90 Días</strong> personalizado ya está generado en nuestros sistemas listo para ser implementado con tu equipo.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Para recibir el documento completo en PDF de manera gratuita, haz clic en uno de los canales de abajo:
-            </p>
+        </div>
+
+        {/* 10 y 11. RUTA RECOMENDADA Y PLAN DE ACCIÓN INICIAL */}
+        <div className="w-full bg-slate-50 border border-slate-200 p-5 rounded-3xl space-y-4">
+          <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
+            <HelpCircle size={16} />
+            <span>Ruta Recomendada: <strong className="text-primary">{recommendedRoute}</strong></span>
           </div>
+          
+          <p className="text-xs text-muted-foreground leading-relaxed italic">
+            {routeDescription}
+          </p>
+
+          <div className="border-t border-slate-200 pt-3 space-y-2.5">
+            <p className="text-xs font-bold text-foreground">Tus próximos pasos recomendados:</p>
+            <ul className="space-y-2">
+              {actionSteps.map((step, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
+                    {idx + 1}
+                  </span>
+                  <span className="leading-tight">{step}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* 12. CTA FINAL (Lead Magnet y Agendamiento) */}
+        <div className="w-full bg-gradient-to-br from-primary/10 to-primary/5 rounded-3xl border border-primary/20 p-6 text-center shadow-lg space-y-4">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">¿Cómo implementar esta ruta?</h3>
+          
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Tu diagnóstico ya muestra dónde está la oportunidad. El siguiente paso es convertir esta información en acción. Solicita tu llamada de diagnóstico para descubrir cómo implementar el <strong>{recommendedRoute}</strong> en tu negocio.
+          </p>
 
           <div className="grid grid-cols-1 gap-3 pt-2">
             {/* Solicitar por WhatsApp */}
@@ -130,7 +322,7 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
               className="flex items-center justify-center gap-2 py-4 px-4 rounded-xl bg-[#25D366] text-white font-semibold text-sm hover:bg-[#20ba5a] transition-colors shadow-sm active:scale-[0.98]"
             >
               <MessageSquare size={18} />
-              Solicitar Plan por WhatsApp
+              Solicitar Ruta por WhatsApp
             </a>
 
             {/* Solicitar por Correo */}
@@ -139,7 +331,7 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
               className="flex items-center justify-center gap-2 py-4 px-4 rounded-xl bg-orange-600 text-white font-semibold text-sm hover:bg-orange-700 transition-colors shadow-sm active:scale-[0.98]"
             >
               <Mail size={18} />
-              Solicitar Plan por Email
+              Agendar llamada por Email
             </a>
           </div>
 
@@ -148,7 +340,7 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
             <p className="text-[10px] text-muted-foreground">
               Si no cuentas con un cliente de correo configurado, copia nuestra dirección:
             </p>
-            <div className="flex items-center gap-1 bg-muted px-3 py-1.5 rounded-lg border border-border max-w-full">
+            <div className="flex items-center gap-1 bg-muted px-3 py-1.5 rounded-lg border border-border max-w-full mx-auto">
               <span className="text-xs font-mono text-foreground truncate max-w-[200px]">hablemos@davidamesc.com</span>
               <button 
                 onClick={handleCopyEmail}
@@ -177,6 +369,7 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
             <RotateCcw size={14} /> Nueva Auditoría
           </button>
         </div>
+
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, name, score, company } = await req.json()
+    const { email, name, score, company, bottleneck, route } = await req.json()
 
     if (!RESEND_API_KEY) {
       throw new Error('No RESEND_API_KEY provided')
@@ -22,52 +22,69 @@ serve(async (req) => {
 
     // Determinamos el texto persuasivo de acuerdo al puntaje
     let scoreText = "";
-    if (score < 50) {
-      scoreText = `Esto indica que tu estrategia actual de marketing digital tiene debilidades críticas que muy probablemente te están costando clientes y presupuesto todos los días. Necesitas tomar medidas correctivas urgentes para detener la pérdida de oportunidades.`;
+    if (score < 40) {
+      scoreText = `Esto indica que tu negocio se encuentra actualmente en un estado de caos operativo. Las acciones de marketing se ejecutan de forma reactiva y desorganizada, lo que consume gran parte de tu energía y presupuesto sin generar retornos estables.`;
+    } else if (score < 60) {
+      scoreText = `Esto indica que tu negocio cuenta con un gran potencial y un producto/servicio validado, pero carece de un sistema comercial ordenado. Los clientes llegan principalmente de forma espontánea o por esfuerzos aislados.`;
     } else if (score < 75) {
-      scoreText = `Esto indica que tienes una base sobre la cual construir, pero existen puntos ciegos importantes en tu marketing que están frenando el crecimiento de tu marca e impidiendo que consigas mejores resultados de ventas.`;
+      scoreText = `Esto indica que tu negocio se encuentra en construcción estratégica. Cuentas con un marketing estructurado en ciertas áreas, pero varios procesos funcionan desconectados entre sí.`;
+    } else if (score < 90) {
+      scoreText = `¡Felicitaciones! Cuentas con un negocio con sistema en crecimiento. Tienes una base sólida, tracción en ventas y orden en tus operaciones. Tu oportunidad principal es optimizar la conversión y fidelización.`;
     } else {
-      scoreText = `¡Felicitaciones! Tienes un marketing estructurado y saludable, aunque siempre hay oportunidades avanzadas para optimizar y escalar tus conversiones al siguiente nivel.`;
+      scoreText = `¡Extraordinario! Tu negocio está optimizado y es altamente escalable. Cuentas con procesos eficientes, medición constante y una marca diferenciada.`;
     }
 
-    // Preparamos el enlace de mailto para el botón de respuesta fácil
-    const mailtoSubject = encodeURIComponent(`Quiero mi Plan de Acción de 90 días - ${company}`);
-    const mailtoBody = encodeURIComponent(`Hola David,\n\nobtuve un puntaje de ${score}/100 en la auditoría de ${company} y me interesa recibir el plan de acción de 90 días en PDF para analizarlo.\n\nSaludos.`);
-    const mailtoUrl = `mailto:hablemos@davidamesc.com?subject=${mailtoSubject}&body=${mailtoBody}`;
+    // Enlace directo de agendamiento por WhatsApp para el botón
+    const whatsappMessageText = `Hola David, acabo de completar mi auditoría para ${company} y obtuve un puntaje de ${score}/100. Mi Ruta Recomendada es: ${route || 'Implementación Coco Brain'}. Quiero agendar una llamada de diagnóstico gratuita contigo.`;
+    const whatsappUrl = `https://wa.me/51913321222?text=${encodeURIComponent(whatsappMessageText)}`;
 
     const htmlContent = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 16px;">
-        <h2 style="color: #111827; margin-top: 0;">Estimado/a ${name},</h2>
-        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+        <h2 style="color: #111827; margin-top: 0; font-size: 20px;">Estimado/a ${name},</h2>
+        
+        <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
           Un gusto saludarte. Acabas de completar el Diagnóstico de Marketing Digital basado en la metodología Coco Brain para tu marca, <strong>${company}</strong>.
         </p>
         
-        <div style="background-color: #f3f4f6; padding: 24px; border-radius: 12px; margin: 24px 0; border: 1px solid #e5e7eb; text-align: center;">
-          <h3 style="margin: 0; color: #111827; font-size: 18px;">Tu Puntaje Global:</h3>
+        <!-- SECCIÓN DE PUNTAJE -->
+        <div style="background-color: #f9fafb; padding: 24px; border-radius: 12px; margin: 24px 0; border: 1px solid #e5e7eb; text-align: center;">
+          <h3 style="margin: 0; color: #374151; font-size: 16px; font-weight: 600;">Tu Puntaje Global:</h3>
           <div style="font-size: 48px; font-weight: bold; color: #ea580c; margin: 10px 0;">${score}/100</div>
-          <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 1.5; font-style: italic;">
+          <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.5; font-style: italic;">
             ${scoreText}
           </p>
         </div>
         
-        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-          Como habrás notado, existen áreas de oportunidad que podemos potenciar. Para ayudarte a resolverlas, he preparado un <strong>Plan de Acción de 90 días</strong> exclusivo para tu negocio.
+        <!-- SECCIÓN DE DIAGNÓSTICO ESTRATÉGICO -->
+        <div style="margin: 24px 0; padding: 20px; border: 1px dashed #ea580c; border-radius: 12px; background-color: #fffaf7;">
+          <h4 style="margin: 0 0 12px 0; color: #ea580c; font-size: 15px; font-weight: bold;">🔍 Diagnóstico Estratégico Especializado:</h4>
+          
+          <div style="margin-bottom: 12px;">
+            <strong style="color: #374151; font-size: 13px; text-transform: uppercase; tracking-wider: 0.05em; display: block;">Cuello de Botella Principal:</strong>
+            <span style="color: #4b5563; font-size: 14px; line-height: 1.5;">${bottleneck || 'Estrategia general'}</span>
+          </div>
+          
+          <div>
+            <strong style="color: #374151; font-size: 13px; text-transform: uppercase; tracking-wider: 0.05em; display: block;">Ruta Recomendada:</strong>
+            <span style="color: #ea580c; font-size: 14px; font-weight: bold; line-height: 1.5;">${route || 'Implementación Coco Brain'}</span>
+          </div>
+        </div>
+        
+        <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+          Tu diagnóstico ya muestra dónde está la oportunidad. El siguiente paso es convertir esta información en acción. Te invito a agendar una llamada de diagnóstico gratuita conmigo para descubrir cómo implementar tu ruta recomendada y potenciar los resultados de tu negocio.
         </p>
         
-        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-          Si deseas que te envíe este plan en formato PDF de manera gratuita, haz clic en el siguiente botón para solicitármelo por correo:
-        </p>
-        
+        <!-- BOTÓN DE ACCIÓN -->
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${mailtoUrl}" style="background-color: #ea580c; color: #ffffff; padding: 16px 32px; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 8px; display: inline-block;">
-            Solicitar mi Plan de Acción de 90 Días
+          <a href="${whatsappUrl}" style="background-color: #25D366; color: #ffffff; padding: 16px 32px; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 8px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            💬 Agendar mi Diagnóstico por WhatsApp
           </a>
         </div>
         
         <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
         
-        <p style="color: #111827; font-size: 16px; margin-bottom: 5px;"><strong>David Ames</strong></p>
-        <p style="color: #6b7280; font-size: 14px; margin-top: 0;">Fundador de <a href="https://davidconsultores.com" style="color: #ea580c; text-decoration: none;">davidconsultores.com</a></p>
+        <p style="color: #111827; font-size: 15px; margin-bottom: 5px;"><strong>David Ames</strong></p>
+        <p style="color: #6b7280; font-size: 13px; margin-top: 0;">Fundador de <a href="https://davidconsultores.com" style="color: #ea580c; text-decoration: none;">davidconsultores.com</a></p>
       </div>
     `;
 

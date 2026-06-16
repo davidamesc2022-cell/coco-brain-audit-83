@@ -39,7 +39,6 @@ export function LeadCaptureScreen({ onSuccess, auditData, onboardingData }: Lead
       phone: '',
     },
   });
-
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
@@ -78,13 +77,46 @@ export function LeadCaptureScreen({ onSuccess, auditData, onboardingData }: Lead
 
       if (auditError) throw auditError;
 
-      // 3. Enviar correo a través de Supabase Edge Function (Resend) - NO BLOQUEANTE
+      // 3. Calcular cuello de botella y ruta recomendada para el email
+      const scoresArray = Object.entries(auditData.areaScores).map(([areaId, score]) => ({
+        areaId: parseInt(areaId),
+        score,
+      }));
+      scoresArray.sort((a, b) => a.score - b.score);
+      const bottleneckAreaId = scoresArray[0]?.areaId || 1;
+
+      const areaNames: Record<number, string> = {
+        1: 'Análisis Situacional',
+        2: 'Objetivos y Metas',
+        3: 'Estrategia de Marca',
+        4: 'Tácticas y Contenido',
+        5: 'Medición y Control',
+        6: 'Post-Venta y Fidelización',
+      };
+      const bottleneckName = areaNames[bottleneckAreaId] || 'Estrategia';
+
+      let recommendedRoute = "";
+      if (bottleneckAreaId === 2 || bottleneckAreaId === 3 || bottleneckAreaId === 4) {
+        recommendedRoute = "Método 4C";
+      } else if (bottleneckAreaId === 1 || bottleneckAreaId === 5) {
+        recommendedRoute = "Marketing Base con SOSTAC";
+      } else {
+        recommendedRoute = "Implementación Coco Brain";
+      }
+
+      if (auditData.totalScore <= 39) {
+        recommendedRoute = "Implementación Coco Brain";
+      }
+
+      // 4. Enviar correo a través de Supabase Edge Function (Resend) - NO BLOQUEANTE
       supabase.functions.invoke('send-audit-email', {
         body: { 
           email: data.email, 
           name: data.fullName, 
           score: auditData.totalScore,
-          company: onboardingData?.companyName || ''
+          company: onboardingData?.companyName || '',
+          bottleneck: bottleneckName,
+          route: recommendedRoute
         }
       }).then(({ data: fnRes, error: fnErr }) => {
         if (fnErr) {
@@ -101,7 +133,6 @@ export function LeadCaptureScreen({ onSuccess, auditData, onboardingData }: Lead
       // Todo salió bien en base de datos, avanzamos de inmediato a los resultados
       onSuccess(leadData.id);
       toast.success('¡Análisis completado exitosamente!');
-      
     } catch (error) {
       console.error('Error saving lead:', error);
       toast.error('Hubo un error al guardar tus datos. Por favor, intenta de nuevo.');
