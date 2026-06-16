@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Sparkles, Building, Globe, Clock, UserCheck, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Building, Globe, Clock, UserCheck, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export interface OnboardingData {
@@ -36,9 +36,9 @@ const businessTypes = [
 ];
 
 const clientTypes = [
-  { value: 'B2C', label: '👥 Consumidores finales (B2C)' },
-  { value: 'B2B', label: '🏢 Otras empresas / Negocios (B2B)' },
-  { value: 'ambos', label: '🤝 Ambos por igual (B2C y B2B)' },
+  { value: 'B2C', label: '👥 Vendo a personas / consumidor final (B2C)' },
+  { value: 'B2B', label: '🏢 Vendo a otras empresas o negocios (B2B)' },
+  { value: 'ambos', label: '🤝 Vendo a ambos por igual (B2C y B2B)' },
 ];
 
 const acquisitionChannels = [
@@ -71,53 +71,24 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
   const [acquisitionChannel, setAcquisitionChannel] = useState('');
   const [operatingTime, setOperatingTime] = useState('');
   const [aiUsage, setAiUsage] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyName.trim() || !description.trim() || !businessType || !clientType || !acquisitionChannel || !operatingTime || !aiUsage) {
       setError('Por favor, completa todas las preguntas para personalizar tu diagnóstico.');
       return;
     }
 
-    if (description.trim().length < 25) {
-      setError('Por favor, escribe una descripción de tu negocio de al menos 25 caracteres para poder darte un diagnóstico preciso.');
+    if (description.trim().length < 50) {
+      setError('Por favor, escribe una descripción de tu negocio de al menos 50 caracteres respondiendo los 3 puntos guía para poder darte un diagnóstico preciso.');
       return;
     }
 
     setError('');
-    setIsUploading(true);
+    setIsSubmitting(true);
 
-    let fileUrl = '';
-    if (file) {
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('lead-documents')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('lead-documents')
-          .getPublicUrl(filePath);
-
-        fileUrl = publicUrl;
-      } catch (err: any) {
-        console.error('Error al subir archivo:', err);
-        setError('No se pudo cargar el archivo. Por favor, inténtalo de nuevo o continúa sin archivo.');
-        setIsUploading(false);
-        return;
-      }
-    }
-
-    setIsUploading(false);
     onSubmit({
       companyName: companyName.trim(),
       description: description.trim(),
@@ -127,7 +98,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
       acquisitionChannel,
       operatingTime,
       aiUsage,
-      fileUrl,
+      fileUrl: '',
     });
   };
 
@@ -173,31 +144,42 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               className="rounded-xl h-11"
-              disabled={isUploading}
+              disabled={isSubmitting}
             />
           </div>
 
           {/* Descripción del Negocio */}
           <div className="space-y-1.5">
-            <Label htmlFor="description" className="text-sm font-semibold flex items-center gap-2">
-              <Sparkles size={16} className="text-muted-foreground" />
-              ¿A qué se dedica tu negocio? (Describe qué vende o su actividad)
+            <Label htmlFor="description" className="text-sm font-semibold flex flex-col gap-1">
+              <span className="flex items-center gap-2">
+                <Sparkles size={16} className="text-muted-foreground" />
+                ¿A qué se dedica tu negocio?
+              </span>
+              <span className="text-xs font-normal text-muted-foreground ml-6 leading-relaxed">
+                Describe tu negocio respondiendo brevemente estas 3 preguntas guía:
+                <br />
+                1. <strong>¿Qué vendes?</strong> (Producto o servicio principal)
+                <br />
+                2. <strong>¿Quién te compra?</strong> (Tu cliente ideal)
+                <br />
+                3. <strong>¿Qué te diferencia?</strong> (Por qué te eligen a ti)
+              </span>
             </Label>
             <textarea
               id="description"
-              placeholder="Ej: Vendemos calzado deportivo y zapatillas de marcas conocidas al por mayor y menor, o brindamos servicios estéticos de lavado de autos (Spa de autos)."
+              placeholder="Ej: Vendemos calzado deportivo de alta calidad a jóvenes de 18 a 30 años (qué y quién). Nos diferenciamos por ofrecer envío gratis en 24 horas y diseños exclusivos (diferencial)."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="flex min-h-[90px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-              rows={3}
-              disabled={isUploading}
+              className="flex min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              rows={4}
+              disabled={isSubmitting}
             />
             <div className="flex justify-between items-center text-xs mt-1 px-1">
               <span className="text-muted-foreground italic">
-                Tip: ¿Qué vendes y a quién está dirigido?
+                Escribe al menos 50 caracteres descriptivos.
               </span>
-              <span className={description.trim().length >= 25 ? "text-green-600 font-semibold" : "text-amber-600 font-semibold"}>
-                {description.trim().length}/25 caracteres mín.
+              <span className={description.trim().length >= 50 ? "text-green-600 font-semibold" : "text-amber-600 font-semibold"}>
+                {description.trim().length}/50 caracteres mín.
               </span>
             </div>
           </div>
@@ -213,7 +195,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isUploading}
+              disabled={isSubmitting}
             >
               {countries.map(c => (
                 <option key={c} value={c}>{c}</option>
@@ -238,7 +220,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                       ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
-                  disabled={isUploading}
+                  disabled={isSubmitting}
                 >
                   {type.label}
                 </button>
@@ -248,9 +230,14 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
 
           {/* Tipo de Cliente (B2B/B2C) */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <UserCheck size={16} className="text-muted-foreground" />
-              ¿Quién es tu cliente principal?
+            <Label className="text-sm font-semibold flex flex-col gap-0.5">
+              <span className="flex items-center gap-2">
+                <UserCheck size={16} className="text-muted-foreground" />
+                ¿Quién es tu cliente principal?
+              </span>
+              <span className="text-xs font-normal text-muted-foreground ml-6 leading-none">
+                B2C: ventas a personas comunes. B2B: ventas a otras empresas o negocios.
+              </span>
             </Label>
             <div className="grid grid-cols-1 gap-2">
               {clientTypes.map(type => (
@@ -263,7 +250,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                       ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
-                  disabled={isUploading}
+                  disabled={isSubmitting}
                 >
                   {type.label}
                 </button>
@@ -273,9 +260,14 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
 
           {/* Canal de Ventas/Captación */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <Globe size={16} className="text-muted-foreground" />
-              ¿Cuál es tu canal de ventas o captación principal?
+            <Label className="text-sm font-semibold flex flex-col gap-0.5">
+              <span className="flex items-center gap-2">
+                <Globe size={16} className="text-muted-foreground" />
+                ¿Cuál es tu canal de ventas o captación principal?
+              </span>
+              <span className="text-xs font-normal text-muted-foreground ml-6 leading-tight">
+                Nota: Si usas varios, marca el que sea tu principal motor de ventas o captación hoy.
+              </span>
             </Label>
             <div className="grid grid-cols-1 gap-2">
               {acquisitionChannels.map(channel => (
@@ -288,7 +280,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                       ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
-                  disabled={isUploading}
+                  disabled={isSubmitting}
                 >
                   {channel.label}
                 </button>
@@ -313,7 +305,7 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                       ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
-                  disabled={isUploading}
+                  disabled={isSubmitting}
                 >
                   {time.label}
                 </button>
@@ -338,65 +330,11 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
                       ? 'border-primary bg-primary/5 text-foreground font-semibold' 
                       : 'border-border bg-background hover:bg-muted text-muted-foreground'
                   }`}
-                  disabled={isUploading}
+                  disabled={isSubmitting}
                 >
                   {usage.label}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Carga de Archivo (Opcional) */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <UploadCloud size={16} className="text-muted-foreground" />
-              ¿Tienes algún briefing o presentación de tu negocio? (Opcional)
-            </Label>
-            <div className="border border-dashed border-border rounded-2xl p-4 bg-muted/20 text-center relative hover:bg-muted/30 transition-colors">
-              {!file ? (
-                <label className="cursor-pointer flex flex-col items-center justify-center space-y-1">
-                  <UploadCloud className="h-8 w-8 text-muted-foreground mb-1" />
-                  <span className="text-sm font-semibold text-foreground">Cargar briefing / presentación</span>
-                  <span className="text-xs text-muted-foreground">PDF, Word o imagen (Máx. 10MB)</span>
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                    onChange={(e) => {
-                      const selectedFile = e.target.files?.[0];
-                      if (selectedFile) {
-                        if (selectedFile.size > 10 * 1024 * 1024) {
-                          setError('El archivo supera el tamaño máximo de 10MB.');
-                          return;
-                        }
-                        setFile(selectedFile);
-                        setError('');
-                      }
-                    }}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                </label>
-              ) : (
-                <div className="flex items-center justify-between bg-background p-2.5 rounded-lg border border-border">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <FileText className="h-5 w-5 text-primary shrink-0" />
-                    <span className="text-xs font-semibold text-foreground truncate max-w-[200px]" title={file.name}>
-                      {file.name}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
-                      ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setFile(null)}
-                    className="text-muted-foreground hover:text-destructive transition-colors"
-                    disabled={isUploading}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
@@ -412,18 +350,18 @@ export function OnboardingScreen({ onSubmit, onBack }: OnboardingScreenProps) {
               variant="outline"
               onClick={onBack}
               className="flex-1 py-6 rounded-xl text-base"
-              disabled={isUploading}
+              disabled={isSubmitting}
             >
               Atrás
             </Button>
             <Button 
               type="submit" 
               className="flex-[2] py-6 rounded-xl text-base font-semibold"
-              disabled={isUploading}
+              disabled={isSubmitting}
             >
-              {isUploading ? (
+              {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" /> Subiendo archivos...
+                  <Loader2 className="h-5 w-5 animate-spin" /> Procesando...
                 </span>
               ) : (
                 <span className="flex items-center justify-center">

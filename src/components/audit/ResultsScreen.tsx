@@ -119,35 +119,66 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
     priority: "Reorganiza tus prioridades de marketing e implementa medición."
   };
 
-  // 3. Definir la ruta recomendada y el plan de acción inicial
+  // 3. Definir la ruta recomendada y el plan de acción inicial personalizado
   let recommendedRoute = "";
   let routeDescription = "";
   let actionSteps: string[] = [];
 
+  const bType = onboardingData?.businessType || "";
+  const cType = onboardingData?.clientType || "";
+  const isB2BOrServiceOrDigital = cType === "B2B" || bType === "servicios" || bType === "digital";
+
   if (bottleneck.areaId === 2 || bottleneck.areaId === 3 || bottleneck.areaId === 4) {
     recommendedRoute = "Método 4C";
     routeDescription = "Porque necesitas ordenar claridad, creatividad, comunicación y conversión antes de avanzar hacia una estrategia más compleja.";
-    actionSteps = [
-      "Clarificar tu cliente ideal, propuesta única de valor y mensaje principal.",
-      "Crear una ruta de contenido estratégica conectada directamente con tu oferta.",
-      "Diseñar un sistema básico de respuesta, seguimiento y cierre de oportunidades comerciales."
-    ];
+    
+    if (isB2BOrServiceOrDigital) {
+      actionSteps = [
+        "Clarificar tu cliente ideal (Buyer Persona) y estructurar una oferta irresistible de entrada (Lead Magnet o sesión inicial gratuita).",
+        "Crear una ruta de contenidos educativos en tus canales activos que resuelvan las 3 objeciones principales de tus prospectos.",
+        "Diseñar un proceso estructurado de ventas por mensajes (DMs/WhatsApp) orientado a agendar llamadas de asesoría o demostración."
+      ];
+    } else {
+      actionSteps = [
+        "Clarificar tu cliente ideal final y entender qué los impulsa a comprar (moda, estatus, necesidad inmediata).",
+        "Crear una ruta de contenido en redes sociales (TikTok/Instagram) mostrando el producto en uso, sus beneficios y el desempaque (unboxing).",
+        "Diseñar un flujo de respuesta rápida y cierre de ventas llevando a los interesados directo a WhatsApp con un mensaje preconfigurado."
+      ];
+    }
   } else if (bottleneck.areaId === 1 || bottleneck.areaId === 5) {
     recommendedRoute = "Marketing Base con SOSTAC";
-    routeDescription = "Porque necesitas estructurar situación, objetivos, estrategia, tácticas, acción y control de manera sistemática.";
-    actionSteps = [
-      "Realizar un análisis situacional profundo de tu competencia y tu posición en el mercado.",
-      "Definir objetivos comerciales y de marketing específicos (KPIs) para los próximos 90 días.",
-      "Implementar una plantilla básica de control de conversión para medir con precisión el origen de tus leads."
-    ];
+    routeDescription = "Porque necesitas de manera sistemática estructurar situación, objetivos, estrategia, tácticas, acción y control.";
+    
+    if (isB2BOrServiceOrDigital) {
+      actionSteps = [
+        "Analizar el posicionamiento y la propuesta de valor de tus 3 principales competidores en el mercado digital.",
+        "Definir tus objetivos de captación de leads calificados y presupuesto de pauta comercial para los próximos 90 días.",
+        "Implementar un cuadro de control semanal para medir el origen exacto de tus prospectos (redes, recomendación, publicidad) y tasa de cierre."
+      ];
+    } else {
+      actionSteps = [
+        "Analizar a tus 3 competidores físicos o digitales más cercanos y documentar sus precios y promociones.",
+        "Establecer metas de venta numéricas y volumen de clientes nuevos semanales para los próximos 90 días.",
+        "Implementar un registro simple (Excel o libreta) para anotar cuántas personas preguntan precio y cuántas compran realmente."
+      ];
+    }
   } else {
     recommendedRoute = "Implementación Coco Brain";
     routeDescription = "Porque tu negocio necesita una intervención completa de sistemas comerciales, procesos, canales, ventas, métricas y optimización.";
-    actionSteps = [
-      "Diseñar una secuencia rápida de seguimiento y fidelización de clientes por WhatsApp.",
-      "Implementar herramientas digitales y de automatización para optimizar tiempos de respuesta.",
-      "Auditar a tus últimos 10 clientes para identificar oportunidades de recompra inmediata."
-    ];
+    
+    if (isB2BOrServiceOrDigital) {
+      actionSteps = [
+        "Diseñar una secuencia de seguimiento post-venta por correo o WhatsApp a los 7 y 30 días para asegurar que estén logrando resultados con tu servicio.",
+        "Crear un proceso formal para solicitar testimonios escritos o en video de tus clientes actuales y usarlos como prueba social en tus propuestas.",
+        "Auditar a tus últimos 10 clientes corporativos o recurrentes para proponerles una renovación, ampliación de servicio o plan anual con beneficios exclusivos."
+      ];
+    } else {
+      actionSteps = [
+        "Diseñar una secuencia de mensajes de agradecimiento por WhatsApp para enviar a las 24 horas de la compra con un cupón de descuento para su siguiente visita.",
+        "Crear un programa básico de referidos ofreciendo un incentivo (regalo o descuento especial) tanto al cliente actual como al nuevo recomendado.",
+        "Auditar a tus últimos 10 compradores para identificar qué productos te compran con mayor frecuencia y ofrecerles promociones cruzadas."
+      ];
+    }
   }
 
   // 4. Configurar URLs dinámicas para el agendamiento enfocado en la ruta
