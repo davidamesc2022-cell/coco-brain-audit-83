@@ -23,8 +23,54 @@ interface Lead {
   country?: string;
   audits?: {
     total_score: number;
+    area_scores: Record<string, number>;
   }[];
 }
+
+const getLeadDiagnostics = (lead: Lead) => {
+  const audit = lead.audits?.[0];
+  if (!audit || !audit.area_scores) {
+    return { bottleneck: '-', route: '-' };
+  }
+
+  const scoresArray = Object.entries(audit.area_scores).map(([areaId, score]) => ({
+    areaId: parseInt(areaId),
+    score,
+  }));
+
+  if (scoresArray.length === 0) {
+    return { bottleneck: '-', route: '-' };
+  }
+
+  // Ordenamos de menor a mayor
+  scoresArray.sort((a, b) => a.score - b.score);
+  const bottleneckAreaId = scoresArray[0]?.areaId || 1;
+
+  const areaNames: Record<number, string> = {
+    1: 'Análisis Situacional',
+    2: 'Objetivos y Metas',
+    3: 'Estrategia de Marca',
+    4: 'Tácticas y Contenido',
+    5: 'Medición y Control',
+    6: 'Post-Venta y Fidelización',
+  };
+  const bottleneck = areaNames[bottleneckAreaId] || 'Estrategia';
+
+  let route = "";
+  if (bottleneckAreaId === 2 || bottleneckAreaId === 3 || bottleneckAreaId === 4) {
+    route = "Método 4C";
+  } else if (bottleneckAreaId === 1 || bottleneckAreaId === 5) {
+    route = "Marketing Base con SOSTAC";
+  } else {
+    route = "Implementación Coco Brain";
+  }
+
+  if (audit.total_score <= 39) {
+    route = "Implementación Coco Brain";
+  }
+
+  return { bottleneck, route };
+};
 
 const businessTypeLabels: Record<string, string> = {
   productos: '📦 Prod. Físicos',
@@ -67,7 +113,7 @@ export default function Admin() {
         .from('leads')
         .select(`
           *,
-          audits ( total_score )
+          audits ( total_score, area_scores )
         `)
         .order('created_at', { ascending: false });
 
@@ -141,20 +187,25 @@ export default function Admin() {
   };
 
   const exportToCSV = () => {
-    const headers = ['Fecha', 'Nombre', 'Email', 'Teléfono', 'Empresa', 'Descripción', 'País', 'Sector', 'Madurez', 'Uso IA', 'Puntaje'];
-    const csvData = leads.map(lead => [
-      format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm'),
-      lead.full_name,
-      lead.email,
-      lead.phone,
-      lead.company_name,
-      lead.description || 'N/A',
-      lead.country || 'N/A',
-      businessTypeLabels[lead.business_type || ''] || lead.business_type || 'N/A',
-      operatingTimeLabels[lead.operating_time || ''] || lead.operating_time || 'N/A',
-      aiUsageLabels[lead.ai_usage || ''] || lead.ai_usage || 'N/A',
-      lead.audits?.[0]?.total_score || 'N/A'
-    ]);
+    const headers = ['Fecha', 'Nombre', 'Email', 'Teléfono', 'Empresa', 'Descripción', 'País', 'Sector', 'Madurez', 'Uso IA', 'Puntaje', 'Cuello de Botella', 'Ruta Recomendada'];
+    const csvData = leads.map(lead => {
+      const diagnostics = getLeadDiagnostics(lead);
+      return [
+        format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm'),
+        lead.full_name,
+        lead.email,
+        lead.phone,
+        lead.company_name,
+        lead.description || 'N/A',
+        lead.country || 'N/A',
+        businessTypeLabels[lead.business_type || ''] || lead.business_type || 'N/A',
+        operatingTimeLabels[lead.operating_time || ''] || lead.operating_time || 'N/A',
+        aiUsageLabels[lead.ai_usage || ''] || lead.ai_usage || 'N/A',
+        lead.audits?.[0]?.total_score || 'N/A',
+        diagnostics.bottleneck,
+        diagnostics.route
+      ];
+    });
 
     const csvContent = [
       headers.join(','),
@@ -283,46 +334,65 @@ export default function Admin() {
                       <TableHead>Uso IA</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Teléfono</TableHead>
+                      <TableHead className="min-w-[150px]">Cuello de Botella</TableHead>
+                      <TableHead className="min-w-[150px]">Ruta Recomendada</TableHead>
                       <TableHead className="text-right">Puntaje</TableHead>
                       <TableHead className="text-right w-[60px]">Acción</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell className="text-center">
-                          <Checkbox 
-                            checked={selectedLeadIds.includes(lead.id)}
-                            onCheckedChange={(checked) => handleSelectOne(lead.id, !!checked)}
-                            aria-label={`Seleccionar lead de ${lead.full_name}`}
-                          />
-                        </TableCell>
-                        <TableCell className="text-xs">{format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
-                        <TableCell className="font-medium text-xs md:text-sm">{lead.full_name}</TableCell>
-                        <TableCell className="font-semibold text-xs md:text-sm">{lead.company_name}</TableCell>
-                        <TableCell className="text-xs max-w-[180px] truncate" title={lead.description}>{lead.description || '-'}</TableCell>
-                        <TableCell className="text-xs">{lead.country || '-'}</TableCell>
-                        <TableCell className="text-xs">{businessTypeLabels[lead.business_type || ''] || lead.business_type || '-'}</TableCell>
-                        <TableCell className="text-xs">{operatingTimeLabels[lead.operating_time || ''] || lead.operating_time || '-'}</TableCell>
-                        <TableCell className="text-xs">{aiUsageLabels[lead.ai_usage || ''] || lead.ai_usage || '-'}</TableCell>
-                        <TableCell className="text-xs">{lead.email}</TableCell>
-                        <TableCell className="text-xs">{lead.phone}</TableCell>
-                        <TableCell className="text-right font-bold text-xs md:text-sm">
-                          {lead.audits?.[0]?.total_score ? `${lead.audits[0].total_score}/100` : '-'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDeleteLead(lead.id, lead.full_name)}
-                            className="text-muted-foreground hover:text-destructive transition-colors h-7 w-7"
-                            title="Eliminar lead"
-                          >
-                            <Trash2 size={13} />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {leads.map((lead) => {
+                      const diagnostics = getLeadDiagnostics(lead);
+                      return (
+                        <TableRow key={lead.id}>
+                          <TableCell className="text-center">
+                            <Checkbox 
+                              checked={selectedLeadIds.includes(lead.id)}
+                              onCheckedChange={(checked) => handleSelectOne(lead.id, !!checked)}
+                              aria-label={`Seleccionar lead de ${lead.full_name}`}
+                            />
+                          </TableCell>
+                          <TableCell className="text-xs">{format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
+                          <TableCell className="font-medium text-xs md:text-sm">{lead.full_name}</TableCell>
+                          <TableCell className="font-semibold text-xs md:text-sm">{lead.company_name}</TableCell>
+                          <TableCell className="text-xs max-w-[180px] truncate" title={lead.description}>{lead.description || '-'}</TableCell>
+                          <TableCell className="text-xs">{lead.country || '-'}</TableCell>
+                          <TableCell className="text-xs">{businessTypeLabels[lead.business_type || ''] || lead.business_type || '-'}</TableCell>
+                          <TableCell className="text-xs">{operatingTimeLabels[lead.operating_time || ''] || lead.operating_time || '-'}</TableCell>
+                          <TableCell className="text-xs">{aiUsageLabels[lead.ai_usage || ''] || lead.ai_usage || '-'}</TableCell>
+                          <TableCell className="text-xs">{lead.email}</TableCell>
+                          <TableCell className="text-xs">{lead.phone}</TableCell>
+                          <TableCell className="text-xs">
+                            {diagnostics.bottleneck !== '-' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/50">
+                                {diagnostics.bottleneck}
+                              </span>
+                            ) : '-'}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {diagnostics.route !== '-' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                                {diagnostics.route}
+                              </span>
+                            ) : '-'}
+                          </TableCell>
+                          <TableCell className="text-right font-bold text-xs md:text-sm">
+                            {lead.audits?.[0]?.total_score ? `${lead.audits[0].total_score}/100` : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleDeleteLead(lead.id, lead.full_name)}
+                              className="text-muted-foreground hover:text-destructive transition-colors h-7 w-7"
+                              title="Eliminar lead"
+                            >
+                              <Trash2 size={13} />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
