@@ -10,7 +10,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
       <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center gap-8">
         {/* Badge */}
         <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-secondary/10 text-secondary text-sm font-medium">
-          ✦ Metodología Coco Brain
+          ✦ Auditoría Estratégica de 12 Puntos
         </span>
 
         {/* Title */}
@@ -21,7 +21,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
             <span className="text-secondary">marketing digital</span>
           </h1>
           <p className="mt-4 text-muted-foreground text-base leading-relaxed max-w-md mx-auto">
-            Auditoría gratuita en 10 minutos. Obtén un diagnóstico accionable y un plan de 90 días para escalar tu negocio.
+            Identifica tu Cuello de Botella y recibe tu Ruta de Crecimiento recomendada. Auditoría gratuita en 10 minutos.
           </p>
         </div>
 
@@ -40,14 +40,14 @@ export function LandingPage({ onStart }: LandingPageProps) {
         {/* Benefits */}
         <div className="w-full flex flex-col gap-3">
           {[
-            { icon: '📊', title: 'Diagnóstico Completo', desc: 'Evalúa 6 áreas clave de tu marketing digital' },
-            { icon: '🎯', title: 'Plan de Acción 90 Días', desc: 'Checklist personalizado con prioridades claras' },
-            { icon: '🔄', title: 'Re-auditoría Mensual', desc: 'Mide tu progreso y ajusta estrategias' },
+            { icon: '📊', title: 'Lectura Estratégica de 12 Puntos', desc: 'Diagnóstico profundo sobre las 6 áreas clave de tu negocio.' },
+            { icon: '🛑', title: 'Tu Cuello de Botella Principal', desc: 'Detecta exactamente qué proceso está frenando tus ventas hoy.' },
+            { icon: '🎯', title: 'Ruta de Crecimiento & Plan de Acción', desc: 'Tu camino de acción ideal (Método 4C, SOSTAC o Coco Brain).' },
           ].map(b => (
             <div key={b.title} className="audit-card p-4 flex items-start gap-3">
               <span className="text-2xl">{b.icon}</span>
               <div>
-                <h3 className="font-semibold text-foreground">{b.title}</h3>
+                <h3 className="font-semibold text-foreground text-sm sm:text-base">{b.title}</h3>
                 <p className="text-sm text-muted-foreground">{b.desc}</p>
               </div>
             </div>
@@ -56,15 +56,15 @@ export function LandingPage({ onStart }: LandingPageProps) {
 
         {/* Includes */}
         <div className="audit-card p-5 w-full">
-          <h3 className="font-semibold text-foreground mb-3">Incluye todo esto</h3>
+          <h3 className="font-semibold text-foreground mb-3">Tu Reporte Estratégico Incluye</h3>
           <div className="flex flex-col gap-2">
             {[
-              'Score 0–100 con semáforo visual',
-              'Resumen ejecutivo por capítulo',
-              'Tareas priorizadas por mes',
-              'Reporte descargable PDF',
-              'Historial de progreso',
-              'Compartible por WhatsApp',
+              'Score global 0–100 y nivel de madurez',
+              'Diagnóstico de Fortalezas y Debilidades',
+              'Identificación de tu Cuello de Botella e impacto real',
+              'Ruta de Crecimiento recomendada a tu medida',
+              'Plan de acción inicial de 3 pasos rápidos',
+              'Canal directo a WhatsApp para agendar asesoría de tu ruta',
             ].map(item => (
               <div key={item} className="flex items-center gap-2 text-sm">
                 <span className="text-level-advanced font-bold">✓</span>
