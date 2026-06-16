@@ -141,17 +141,6 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
     ];
   }
 
-  // Si el puntaje global es crítico, sugerir directamente la Implementación Completa
-  if (totalScore <= 39) {
-    recommendedRoute = "Implementación Coco Brain";
-    routeDescription = "Porque tu negocio se encuentra en caos operativo y requiere una intervención integral urgente de todo tu sistema comercial.";
-    actionSteps = [
-      "Frenar la pérdida de leads automatizando tus primeras respuestas comerciales en canales digitales.",
-      "Definir tu oferta principal y tu propuesta de valor clave para diferenciarte.",
-      "Construir una base de datos unificada de clientes para iniciar seguimiento estructurado de inmediato."
-    ];
-  }
-
   // 4. Configurar URLs dinámicas para el agendamiento enfocado en la ruta
   const whatsappMessage = `Hola David, acabo de completar mi auditoría para ${companyName} y obtuve un puntaje de ${totalScore}/100 (${levelLabel}). Mi Ruta Recomendada es: ${recommendedRoute}. Quiero agendar una llamada de diagnóstico gratuita contigo.`;
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;

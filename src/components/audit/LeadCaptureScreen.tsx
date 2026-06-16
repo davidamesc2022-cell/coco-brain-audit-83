@@ -107,10 +107,6 @@ export function LeadCaptureScreen({ onSuccess, auditData, onboardingData }: Lead
         recommendedRoute = "Implementación Coco Brain";
       }
 
-      if (auditData.totalScore <= 39) {
-        recommendedRoute = "Implementación Coco Brain";
-      }
-
       // 4. Enviar correo a través de Supabase Edge Function (Resend) - NO BLOQUEANTE
       supabase.functions.invoke('send-audit-email', {
         body: { 

@@ -68,10 +68,6 @@ const getLeadDiagnostics = (lead: Lead) => {
     route = "Implementación Coco Brain";
   }
 
-  if (audit.total_score <= 39) {
-    route = "Implementación Coco Brain";
-  }
-
   return { bottleneck, route };
 };
 
