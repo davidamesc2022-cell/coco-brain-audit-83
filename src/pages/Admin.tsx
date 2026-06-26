@@ -67,14 +67,7 @@ const getLeadDiagnostics = (lead: Lead) => {
   };
   const bottleneck = areaNames[bottleneckAreaId] || 'Estrategia';
 
-  let route = "";
-  if (bottleneckAreaId === 2 || bottleneckAreaId === 3 || bottleneckAreaId === 4) {
-    route = "Método 4C";
-  } else if (bottleneckAreaId === 1 || bottleneckAreaId === 5) {
-    route = "Marketing Base con SOSTAC";
-  } else {
-    route = "Implementación Coco Brain";
-  }
+  const route = audit.total_score <= 50 ? "Método 4C" : "Sistema SOSTAC";
 
   return { bottleneck, route };
 };

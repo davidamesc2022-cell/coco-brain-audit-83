@@ -128,7 +128,7 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
   const cType = onboardingData?.clientType || "";
   const isB2BOrServiceOrDigital = cType === "B2B" || bType === "servicios" || bType === "digital";
 
-  if (bottleneck.areaId === 2 || bottleneck.areaId === 3 || bottleneck.areaId === 4) {
+  if (totalScore <= 50) {
     recommendedRoute = "Método 4C";
     routeDescription = "Porque necesitas ordenar claridad, creatividad, comunicación y conversión antes de avanzar hacia una estrategia más compleja.";
     
@@ -145,8 +145,8 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
         "Diseñar un flujo de respuesta rápida y cierre de ventas llevando a los interesados directo a WhatsApp con un mensaje preconfigurado."
       ];
     }
-  } else if (bottleneck.areaId === 1 || bottleneck.areaId === 5) {
-    recommendedRoute = "Marketing Base con SOSTAC";
+  } else {
+    recommendedRoute = "Sistema SOSTAC";
     routeDescription = "Porque necesitas de manera sistemática estructurar situación, objetivos, estrategia, tácticas, acción y control.";
     
     if (isB2BOrServiceOrDigital) {
@@ -162,31 +162,14 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
         "Implementar un registro simple (Excel o libreta) para anotar cuántas personas preguntan precio y cuántas compran realmente."
       ];
     }
-  } else {
-    recommendedRoute = "Implementación Coco Brain";
-    routeDescription = "Porque tu negocio necesita una intervención completa de sistemas comerciales, procesos, canales, ventas, métricas y optimización.";
-    
-    if (isB2BOrServiceOrDigital) {
-      actionSteps = [
-        "Diseñar una secuencia de seguimiento post-venta por correo o WhatsApp a los 7 y 30 días para asegurar que estén logrando resultados con tu servicio.",
-        "Crear un proceso formal para solicitar testimonios escritos o en video de tus clientes actuales y usarlos como prueba social en tus propuestas.",
-        "Auditar a tus últimos 10 clientes corporativos o recurrentes para proponerles una renovación, ampliación de servicio o plan anual con beneficios exclusivos."
-      ];
-    } else {
-      actionSteps = [
-        "Diseñar una secuencia de mensajes de agradecimiento por WhatsApp para enviar a las 24 horas de la compra con un cupón de descuento para su siguiente visita.",
-        "Crear un programa básico de referidos ofreciendo un incentivo (regalo o descuento especial) tanto al cliente actual como al nuevo recomendado.",
-        "Auditar a tus últimos 10 compradores para identificar qué productos te compran con mayor frecuencia y ofrecerles promociones cruzadas."
-      ];
-    }
   }
 
   // 4. Configurar URLs dinámicas para el agendamiento enfocado en la ruta
-  const whatsappMessage = `Hola David, acabo de completar mi auditoría para ${companyName} y obtuve un puntaje de ${totalScore}/100 (${levelLabel}). Mi Ruta Recomendada es: ${recommendedRoute}. Quiero agendar una llamada de diagnóstico gratuita contigo.`;
+  const whatsappMessage = `Hola David, acabo de completar mi auditoría para ${companyName} y obtuve un puntaje de ${totalScore}/100 (${levelLabel}). Mi Ruta Recomendada es: ${recommendedRoute}. Quiero agendar mi Llamada de Planificación gratuita por WhatsApp.`;
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const mailtoSubject = `Quiero agendar mi llamada de diagnóstico - ${companyName}`;
-  const mailtoBody = `Hola David,\n\nobtuve un puntaje de ${totalScore}/100 en la auditoría de ${companyName} (${levelLabel}).\n\nMi Ruta Recomendada es: ${recommendedRoute}.\n\nMe interesa agendar una llamada de diagnóstico gratuita contigo.\n\nSaludos.`;
+  const mailtoSubject = `Quiero agendar mi Llamada de Planificación - ${companyName}`;
+  const mailtoBody = `Hola David,\n\nobtuve un puntaje de ${totalScore}/100 en la auditoría de ${companyName} (${levelLabel}).\n\nMi Ruta Recomendada es: ${recommendedRoute}.\n\nMe interesa agendar mi Llamada de Planificación gratuita con usted.\n\nSaludos.`;
   const mailtoUrl = `mailto:hablemos@davidamesc.com?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
 
   return (
@@ -210,6 +193,14 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
             Nivel actual: {levelLabel}
           </span>
         </div>
+
+        {totalScore <= 50 && (
+          <div className="w-full p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center animate-fade-slide-up">
+            <p className="text-xs font-semibold text-amber-600 leading-relaxed">
+              ⚠️ En este nivel, tu prioridad absoluta no es escalar ni invertir más en publicidad, sino ordenar la casa y automatizar procesos básicos antes de que el caos te consuma.
+            </p>
+          </div>
+        )}
 
         {/* 3. DIAGNÓSTICO EJECUTIVO */}
         <div className="w-full audit-card p-5 bg-card border-border shadow-sm space-y-2">
@@ -285,9 +276,14 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
 
         {/* 7 y 8. CUELLO DE BOTELLA E IMPACTO */}
         <div className="w-full audit-card p-5 border-l-4 border-l-red-500 bg-red-50/5 space-y-3">
-          <div className="flex items-center gap-2 text-red-600 font-bold text-sm">
-            <ShieldAlert size={16} />
-            <span>Cuello de Botella Principal: {bottleneck.name}</span>
+          <div>
+            <div className="flex items-center gap-2 text-red-600 font-bold text-sm mb-1">
+              <ShieldAlert size={16} />
+              <span>Cuello de Botella Principal: {bottleneck.name}</span>
+            </div>
+            <p className="text-[11px] text-red-500 font-medium italic ml-6">
+              (Nota del Experto: Aquí es exactamente donde tu negocio está teniendo la mayor fuga de dinero y oportunidades de venta en este momento).
+            </p>
           </div>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Impacto en tu negocio:</p>
@@ -339,7 +335,7 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
           <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">¿Cómo implementar esta ruta?</h3>
           
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Tu diagnóstico ya muestra dónde está la oportunidad. El siguiente paso es convertir esta información en acción. Solicita tu llamada de diagnóstico para descubrir cómo implementar el <strong>{recommendedRoute}</strong> en tu negocio.
+            Ahora que tienes absoluta claridad sobre lo que está frenando tu crecimiento, el siguiente paso es dejar la teoría y pasar a la acción. Te invito a agendar una Llamada de Planificación gratuita conmigo por WhatsApp. En esta llamada de 15 minutos te explicaré exactamente cómo implementar tu Ruta Recomendada para destrabar tus ventas.
           </p>
 
           <div className="grid grid-cols-1 gap-3 pt-2">
@@ -351,7 +347,7 @@ export function ResultsScreen({ areaScores, totalScore, onShare, onReset, onboar
               className="flex items-center justify-center gap-2 py-4 px-4 rounded-xl bg-[#25D366] text-white font-semibold text-sm hover:bg-[#20ba5a] transition-colors shadow-sm active:scale-[0.98]"
             >
               <MessageSquare size={18} />
-              Solicitar Ruta por WhatsApp
+              🟢 Agendar mi Llamada de Planificación
             </a>
 
             {/* Solicitar por Correo */}
